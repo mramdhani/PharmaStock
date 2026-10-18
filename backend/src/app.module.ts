@@ -8,6 +8,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { envValidationSchema } from './config/env.validation';
 import { typeOrmConfigFactory } from './config/typeorm.config';
+import { ProductsModule } from './products/products.module';
 
 /**
  * Root module: "akar" dari seluruh aplikasi.
@@ -30,6 +31,7 @@ import { typeOrmConfigFactory } from './config/typeorm.config';
 
     // 3. Modul Fitur
     CategoriesModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [

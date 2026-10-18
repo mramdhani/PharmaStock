@@ -94,7 +94,33 @@ Setiap langkah dicatat di sini: apa yang dikerjakan, kenapa, dan konsep yang dip
   - Pengujian live: `POST`, duplicate check, validasi gagal, `GET` pagination & search, `PATCH`, dan `DELETE`.
   - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs.
 
-### Step 5 — Modul Products (Master Data Produk & Relasi Category) ⏳
+### Step 5 — Modul Products (Master Data Produk & Relasi Category) ✅
+- **Arsitektur Modul**:
+  ```
+  src/products/
+  ├── dto/
+  │   ├── create-product.dto.ts  <-- category_id (UUID), sku (Uppercase, regex [A-Z0-9_-]+), unit, minimum_stock (>= 0)
+  │   ├── update-product.dto.ts  <-- PartialType + is_active boolean
+  │   └── product-query.dto.ts   <-- extends PaginationQueryDto, filter category_id, is_active, low_stock
+  ├── entities/
+  │   └── product.entity.ts      <-- Check("minimum_stock" >= 0), relasi Category & Batches
+  ├── products.service.ts        <-- Validasi FK category, cek SKU duplikat, hitung total_stock, smart deactivation
+  ├── products.controller.ts     <-- ParseUUIDPipe, Swagger, @ResponseMessage
+  ├── products.service.spec.ts   <-- Unit tests (NotFound category, Conflict SKU)
+  └── products.module.ts         <-- TypeOrmModule.forFeature([Product, Category, Batch])
+  ```
+- **Poin Keamanan & Best Practice**:
+  1. `Transform UpperCase & Regex`: SKU otomatis diubah menjadi huruf kapital dan difilter agar hanya karakter aman (`[A-Z0-9_-]+`) yang lolos.
+  2. `Foreign Key Validation`: Memastikan kategori yang dituju benar-benar ada di database sebelum menyimpan produk, mencegah *orphan foreign key*.
+  3. `Kalkulasi Dinamis (FEFO)`: Menghitung saldo `total_stock` dari seluruh batch produk dan mendeteksi secara *real-time* status `is_low_stock` (stok menipis).
+  4. `Smart Deactivation (Prinsip Audit Perusahaan)`: Jika produk sudah memiliki riwayat batch, sistem melindunginya dari penghapusan permanen dan mengubah statusnya menjadi `is_active: false`.
+- **Pengujian**:
+  - 10 unit test lulus (`npm test`).
+  - Pengujian live: `POST`, verifikasi category UUID, penolakan SKU duplikat, kalkulasi `total_stock`, `PATCH`, dan `DELETE`.
+  - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs.
+
+### Step 6 — Modul Batches (Manajemen Batch & Expiry Tracking) ⏳
+
 
 
 
