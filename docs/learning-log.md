@@ -173,7 +173,55 @@ Setiap langkah dicatat di sini: apa yang dikerjakan, kenapa, dan konsep yang dip
   - Pengujian live: penolakan stok 0 (409), penolakan quantity negatif (400), sukses Stock In 100 unit (saldo 100), sukses Stock Out 30 unit (saldo 70), penolakan permintaan melebihi saldo (409), verifikasi buku besar, dan update otomatis total stok produk menjadi 70.
   - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs.
 
-### Step 8 — Authentication & Authorization (JWT, Bcrypt, & RolesGuard) ⏳
+### Step 8 — Autentikasi, Otorisasi RBAC & Rate Limiting (JWT, Bcrypt, Throttler) ✅
+- **Arsitektur Modul**:
+  ```
+  src/auth/
+  ├── decorators/
+  │   ├── current-user.decorator.ts <-- Mengambil entity User dari request (hasil validasi JWT)
+  │   ├── public.decorator.ts       <-- Menandai endpoint bebas akses tanpa token (@Public)
+  │   └── roles.decorator.ts        <-- Menentukan hak akses role (@Roles(UserRole.ADMIN, ...))
+  ├── dto/
+  │   └── login.dto.ts              <-- email & password validation
+  ├── guards/
+  │   ├── jwt-auth.guard.ts         <-- Global Guard: wajib Bearer token kecuali ditandai @Public()
+  │   └── roles.guard.ts            <-- Memverifikasi role user (ADMIN, STAFF, VIEWER)
+  ├── strategies/
+  │   └── jwt.strategy.ts           <-- Passport JWT Strategy: verifikasi signature & status is_active user
+  ├── auth.service.ts               <-- Login verifikasi bcrypt, generate JWT access token, getProfile
+  ├── auth.controller.ts            <-- POST /auth/login (Rate limited 5 req/min), GET /auth/profile
+  ├── auth.service.spec.ts          <-- Unit test login (sukses, salah password, user nonaktif, unknown)
+  └── auth.module.ts                <-- PassportModule, JwtModule (15m expiry), TypeOrmModule
+
+  src/users/
+  ├── dto/                          <-- create-user.dto.ts & update-user.dto.ts
+  ├── users.service.ts              <-- CRUD pengguna, hash password, proteksi immutable Master Admin
+  ├── users.controller.ts           <-- Hanya ADMIN yang boleh mengelola user (@Roles(UserRole.ADMIN))
+  ├── users.service.spec.ts         <-- Unit test proteksi Master Admin, email duplikat, hash bcrypt
+  └── users.module.ts
+  ```
+- **Poin Keamanan & Best Practice Industri**:
+  1. `Secure by Default (Zero Trust)`: Seluruh endpoint di aplikasi otomatis terlindungi oleh `JwtAuthGuard` secara global (`APP_GUARD`). Endpoint publik seperti login, health check, dan Swagger secara eksplisit ditandai dengan `@Public()`.
+  2. `Role-Based Access Control (RBAC)`:
+     - `ADMIN`: Akses penuh ke seluruh fitur dan manajemen akun pengguna.
+     - `STAFF`: Akses transaksi harian (tambah/edit produk, batch, dan catat Stock In/Out).
+     - `VIEWER`: Akses read-only (`GET` saja). Aksi mutasi data otomatis ditolak dengan `403 Forbidden`.
+  3. `Rate Limiting / Anti Brute-Force (Throttler)`:
+     - Proteksi global 60 request per menit.
+     - Endpoint sensitif `POST /auth/login` diproteksi ketat: maksimal 5 percobaan per menit. Jika melampaui, IP penyerang otomatis diblokir dengan `429 Too Many Requests`.
+  4. `Proteksi Akun Master Admin`:
+     - Akun root `admin@pharmastock.com` dilindungi di tingkat kode agar tidak dapat dinonaktifkan (`is_active = false`) atau diturunkan jabatannya (`role != ADMIN`) demi mencegah *system lockout*.
+  5. `Audit Trail Terintegrasi`:
+     - Transaksi `Stock In` dan `Stock Out` otomatis mencatat ID staf yang sedang login via token JWT ke buku besar mutasi stok (`stock_movements.user_id`).
+- **Pengujian**:
+  - 37 unit test lulus di 7 test suites (`npm test`).
+  - Pengujian live:
+    - Akses tanpa token ditolak `401 Unauthorized`.
+    - Login sukses mengembalikan token JWT bertipe Bearer dan payload identitas user.
+    - Role VIEWER berhasil melakukan `GET /categories` (200), namun ditolak `403 Forbidden` saat mencoba `POST /categories` atau mutasi stok.
+    - Brute-force 7 request login berturut-turut memicu respons `429 Too Many Requests`.
+  - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs lengkap dengan tombol `Authorize` (Bearer JWT) dan kredensial demo untuk perekrut.
+
 
 
 

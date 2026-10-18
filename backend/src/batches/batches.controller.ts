@@ -12,27 +12,32 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { ResponseMessage } from '../common/decorators/response-message.decorator';
+import { UserRole } from '../users/entities/user.entity';
 import { BatchesService } from './batches.service';
 import { BatchQueryDto } from './dto/batch-query.dto';
 import { CreateBatchDto } from './dto/create-batch.dto';
 import { UpdateBatchDto } from './dto/update-batch.dto';
 
 @ApiTags('Batches')
+@ApiBearerAuth()
 @Controller('batches')
 export class BatchesController {
   constructor(private readonly batchesService: BatchesService) {}
 
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ResponseMessage('Batch berhasil dibuat')
   @ApiOperation({
     summary:
-      'Tambah batch obat baru (saldo stok awal otomatis 0, stok ditambah lewat Stock In)',
+      'Tambah batch obat baru (saldo stok awal otomatis 0, stok ditambah lewat Stock In) - Admin/Staff',
   })
   @ApiResponse({ status: 201, description: 'Batch berhasil dibuat' })
   @ApiResponse({ status: 400, description: 'Validasi gagal / tanggal expired di masa lalu' })
+  @ApiResponse({ status: 403, description: 'Akses ditolak (Bukan Admin/Staff)' })
   @ApiResponse({ status: 404, description: 'Produk tidak ditemukan' })
   @ApiResponse({ status: 409, description: 'Nomor batch sudah ada untuk produk ini' })
   create(@Body() createBatchDto: CreateBatchDto) {
@@ -50,11 +55,6 @@ export class BatchesController {
     return this.batchesService.findAll(query);
   }
 
-  /**
-   * Catatan Arsitektur NestJS:
-   * Route statis '/expiring' WAJIB ditempatkan SEBELUM route dinamis '/:id',
-   * agar string 'expiring' tidak disangka sebagai parameter :id.
-   */
   @Get('expiring')
   @ResponseMessage('Daftar batch mendekati kedaluwarsa berhasil diambil')
   @ApiOperation({
@@ -86,11 +86,13 @@ export class BatchesController {
     return this.batchesService.findOne(id);
   }
 
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @Patch(':id')
   @ResponseMessage('Batch berhasil diperbarui')
-  @ApiOperation({ summary: 'Perbarui nomor batch atau tanggal kedaluwarsa' })
+  @ApiOperation({ summary: 'Perbarui nomor batch atau tanggal kedaluwarsa (Admin/Staff)' })
   @ApiResponse({ status: 200, description: 'Batch berhasil diperbarui' })
   @ApiResponse({ status: 400, description: 'Format input tidak valid' })
+  @ApiResponse({ status: 403, description: 'Akses ditolak (Bukan Admin/Staff)' })
   @ApiResponse({ status: 404, description: 'Batch tidak ditemukan' })
   @ApiResponse({ status: 409, description: 'Nomor batch baru sudah digunakan' })
   update(
@@ -100,13 +102,15 @@ export class BatchesController {
     return this.batchesService.update(id, updateBatchDto);
   }
 
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
   @Delete(':id')
   @ResponseMessage('Batch berhasil dihapus')
   @ApiOperation({
     summary:
-      'Hapus batch (hanya diizinkan jika saldo stok 0 dan belum pernah ada mutasi stok)',
+      'Hapus batch (hanya diizinkan jika saldo stok 0 dan belum pernah ada mutasi stok) - Admin/Staff',
   })
   @ApiResponse({ status: 200, description: 'Batch berhasil dihapus' })
+  @ApiResponse({ status: 403, description: 'Akses ditolak (Bukan Admin/Staff)' })
   @ApiResponse({ status: 404, description: 'Batch tidak ditemukan' })
   @ApiResponse({ status: 409, description: 'Batch masih memiliki saldo / riwayat mutasi' })
   remove(@Param('id', new ParseUUIDPipe()) id: string) {

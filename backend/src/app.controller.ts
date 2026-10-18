@@ -1,6 +1,7 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
+import { Public } from './auth/decorators/public.decorator';
 
 /**
  * Health check: dipakai monitoring (dan Docker nanti) untuk mengecek
@@ -12,6 +13,7 @@ export class AppController {
   // DataSource di-inject otomatis oleh NestJS (Dependency Injection).
   constructor(private readonly dataSource: DataSource) {}
 
+  @Public()
   @Get()
   @ApiOkResponse({ description: 'API dan database berjalan normal' })
   async check() {

@@ -35,8 +35,15 @@ async function bootstrap() {
 
   // Swagger: dokumentasi API interaktif di /api/docs
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('PharmaStock API')
-    .setDescription('Inventory & Batch Expiry Management System')
+    .setTitle('PharmaStock API — Enterprise Pharmaceutical Inventory')
+    .setDescription(
+      `Sistem Manajemen Inventaris Farmasi Berbasis Batch & Expiry (NestJS + PostgreSQL).\n\n` +
+        `### 🔑 Demo Credentials (Untuk Mencoba API):\n` +
+        `- **Administrator**: \`admin@pharmastock.com\` | \`PharmaStock123!\` (Akses Penuh)\n` +
+        `- **Staff Gudang**: \`staff@pharmastock.com\` | \`PharmaStock123!\` (Kelola Batch & Stock In/Out)\n` +
+        `- **Public Viewer**: \`viewer@pharmastock.com\` | \`PharmaStock123!\` (Read-only, uji proteksi 403 Forbidden)\n\n` +
+        `*Cara Menguji:* Login di endpoint \`POST /api/v1/auth/login\`, salin \`access_token\`, lalu klik tombol **Authorize** (gembok) di kanan atas.`,
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .build();
