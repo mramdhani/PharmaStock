@@ -10,6 +10,7 @@ import { envValidationSchema } from './config/env.validation';
 import { typeOrmConfigFactory } from './config/typeorm.config';
 import { BatchesModule } from './batches/batches.module';
 import { ProductsModule } from './products/products.module';
+import { StockModule } from './stock/stock.module';
 
 /**
  * Root module: "akar" dari seluruh aplikasi.
@@ -34,6 +35,7 @@ import { ProductsModule } from './products/products.module';
     CategoriesModule,
     ProductsModule,
     BatchesModule,
+    StockModule,
   ],
   controllers: [AppController],
   providers: [

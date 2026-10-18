@@ -145,7 +145,36 @@ Setiap langkah dicatat di sini: apa yang dikerjakan, kenapa, dan konsep yang dip
   - Pengujian live: penolakan expired masa lalu, pembuatan batch, penolakan nomor batch duplikat, verifikasi urutan FEFO, dan filter dashboard.
   - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs.
 
-### Step 7 — Modul Stock Movements & Transaksi Database (Stock In / Out) ⏳
+### Step 7 — Modul Stock Movements & Transaksi Database (Stock In / Out) ✅
+- **Arsitektur Modul**:
+  ```
+  src/stock/
+  ├── dto/
+  │   ├── stock-in.dto.ts    <-- batch_id, quantity (> 0), reference_no (PO), notes
+  │   ├── stock-out.dto.ts   <-- batch_id, quantity (> 0), reference_no (DO), notes
+  │   └── stock-query.dto.ts <-- filter type (IN/OUT), batch_id, product_id, pagination
+  ├── entities/
+  │   └── stock-movement.entity.ts <-- Immutable Ledger, Check(quantity > 0), relasi Batch & User
+  ├── stock.service.ts       <-- ACID Transaction (QueryRunner), Pessimistic Lock, Anti-Race Condition
+  ├── stock.controller.ts    <-- /stock/in, /stock/out, /stock/movements
+  ├── stock.service.spec.ts  <-- 21 passing unit tests
+  └── stock.module.ts        <-- TypeOrmModule.forFeature([StockMovement, Batch, User, Product])
+  ```
+- **Poin Keamanan & Best Practice Enterprise (Wajib untuk Interview)**:
+  1. `Database Transaction (ACID)`: Menggunakan `QueryRunner` dari TypeORM. Perubahan saldo `current_stock` pada tabel `batches` dan pencatatan riwayat ke `stock_movements` dibungkus dalam satu transaksi. Jika salah satu gagal, seluruh operasi di-*rollback* otomatis sehingga tidak ada data yang pincang.
+  2. `Pessimistic Row-Level Locking (SELECT ... FOR UPDATE)`:
+     - Mencegah *Race Condition* (misal dua staf mengeluarkan stok yang sama secara bersamaan).
+     - *Pelajaran Penting PostgreSQL*: `FOR UPDATE` hanya dikunci pada tabel tunggal `batches` tanpa `LEFT JOIN` relasi luar (`nullable side of outer join`), sehingga query locking berjalan sangat cepat dan sesuai standar ANSI SQL.
+  3. `Proteksi Obat Expired`: Sistem menolak transaksi `Stock Out` pada batch yang sudah melewati tanggal kedaluwarsa (`409 Conflict`), mematuhi regulasi farmasi.
+  4. `Pemeriksaan Saldo Real-Time`: Jika diminta 80 unit sedangkan saldo tersisa 70 unit, sistem langsung menolak dengan `409 Conflict (Stok tidak mencukupi)`.
+  5. `Buku Besar Abadi (Immutable Ledger)`: Riwayat pergerakan stok tidak menyediakan endpoint `PATCH` atau `DELETE`. Setiap gram/unit obat yang keluar-masuk selalu terlacak lengkap dengan `user_id`, nomor PO/DO, dan waktu transaksi.
+- **Pengujian**:
+  - 21 unit test lulus (`npm test`).
+  - Pengujian live: penolakan stok 0 (409), penolakan quantity negatif (400), sukses Stock In 100 unit (saldo 100), sukses Stock Out 30 unit (saldo 70), penolakan permintaan melebihi saldo (409), verifikasi buku besar, dan update otomatis total stok produk menjadi 70.
+  - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs.
+
+### Step 8 — Authentication & Authorization (JWT, Bcrypt, & RolesGuard) ⏳
+
 
 
 
