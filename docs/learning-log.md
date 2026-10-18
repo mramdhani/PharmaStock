@@ -222,10 +222,34 @@ Setiap langkah dicatat di sini: apa yang dikerjakan, kenapa, dan konsep yang dip
     - Brute-force 7 request login berturut-turut memicu respons `429 Too Many Requests`.
   - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs lengkap dengan tombol `Authorize` (Bearer JWT) dan kredensial demo untuk perekrut.
 
-
-
-
-
-
-
-
+### Step 9 — Modul Dashboard Summary (Executive KPI, Chart 7 Hari & Mutasi Terkini) ✅
+- **Arsitektur Modul**:
+  ```
+  src/dashboard/
+  ├── dashboard.controller.ts    <-- GET /dashboard/summary, @ApiBearerAuth(), @ResponseMessage
+  ├── dashboard.service.ts       <-- Agregasi KPI paralel (Promise.all), deret 7 hari kontigu, 5 mutasi terkini
+  ├── dashboard.service.spec.ts  <-- Unit test KPI aggregator & chart data formatter
+  └── dashboard.module.ts        <-- TypeOrmModule.forFeature([Product, Batch, StockMovement, Category])
+  ```
+- **Poin Arsitektur & Optimasi Query**:
+  1. `Parallel Aggregation (Promise.all)`: Menjalankan penghitungan total produk, kategori, total fisik unit stok, jumlah stok kritis, batch kedaluwarsa, 5 aktivitas terakhir, dan rekapitulasi mutasi 7 hari secara simultan untuk memangkas latensi database.
+  2. `Subquery Having untuk Stok Kritis`:
+     ```sql
+     SELECT COUNT(*)::int FROM (
+       SELECT p.id
+       FROM products p
+       LEFT JOIN batches b ON b.product_id = p.id
+       WHERE p.is_active = true
+       GROUP BY p.id, p.minimum_stock
+       HAVING COALESCE(SUM(b.current_stock), 0) <= p.minimum_stock
+     ) sub
+     ```
+     Mendeteksi produk yang saldo total stoknya sudah di bawah atau sama dengan batas `minimum_stock`.
+  3. `Contiguous 7-Day Series`: Mengisi tanggal kosong dengan volume 0 agar grafik visualisasi di Next.js (Recharts / Chart.js) memiliki data yang kontinu dan konsisten tanpa jeda sumbu X.
+  4. `Recent Movements with Deep Relations`: Mengambil 5 riwayat transaksi terakhir lengkap dengan nama produk, SKU, nomor batch, dan nama staf penanggung jawab.
+- **Pengujian**:
+  - 39 unit test lulus di 8 test suites (`npm test`).
+  - Pengujian live `GET /api/v1/dashboard/summary` menghasilkan JSON lengkap dengan respons time < 50ms:
+    - `kpi`: `total_products: 1`, `total_categories: 3`, `total_stock_units: 70`, `low_stock_products_count: 0`, `expiring_batches_count: 0`.
+    - `chart_data_7_days`: data volume in/out per tanggal.
+    - `recent_movements`: 2 transaksi aktual (Stock In 100 PO-2026-DEXA-01 & Stock Out 30 DO-2026-RS-01).

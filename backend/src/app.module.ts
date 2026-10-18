@@ -13,6 +13,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { envValidationSchema } from './config/env.validation';
 import { typeOrmConfigFactory } from './config/typeorm.config';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { ProductsModule } from './products/products.module';
 import { StockModule } from './stock/stock.module';
 import { UsersModule } from './users/users.module';
@@ -52,6 +53,7 @@ import { UsersModule } from './users/users.module';
     ProductsModule,
     BatchesModule,
     StockModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [
