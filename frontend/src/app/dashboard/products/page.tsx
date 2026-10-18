@@ -321,7 +321,14 @@ export default function ProductsPage() {
             <div>
               <label className="label">Batas Minimum Stok <span className="text-red-500">*</span></label>
               <input className="input" type="number" min={0} value={form.minimum_stock} onChange={(e) => setForm({ ...form, minimum_stock: Number(e.target.value) })} />
+              <p className="text-[11px] text-slate-500 mt-1">Ambang batas sistem untuk peringatan stok menipis.</p>
             </div>
+          </div>
+          <div className="bg-amber-50/70 border border-amber-200/80 rounded-lg p-2.5 text-xs text-amber-900 flex items-start gap-2">
+            <span className="shrink-0 mt-0.5">💡</span>
+            <p>
+              <strong>Informasi Stok:</strong> Stok fisik obat tidak diisi manual di sini, melainkan bertambah otomatis saat mencatat nomor batch dan tanggal kedaluwarsa di menu <strong>Stok Masuk</strong>.
+            </p>
           </div>
         </div>
       </Modal>
