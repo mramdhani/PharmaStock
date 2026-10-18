@@ -38,45 +38,45 @@ export default function Sidebar() {
     <aside className="sidebar">
       {/* Brand */}
       <div className="sidebar-brand">
-        <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-[#c41230] shadow-sm shadow-red-200 flex items-center justify-center shrink-0">
           <Cross className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-base font-bold text-neutral-900">PharmaStock</h1>
-          <p className="text-[11px] text-neutral-400">Inventory Management</p>
+          <h1 className="text-base font-bold text-slate-900 leading-tight">PharmaStock</h1>
+          <p className="text-[11px] font-medium text-slate-400">Inventory Management</p>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="sidebar-nav">
-        <p className="px-3 mb-2 text-[10px] font-semibold text-neutral-400 uppercase tracking-widest">Menu</p>
+        <p className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Menu</p>
         {navigation.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={isActive ? 'sidebar-link-active' : 'sidebar-link'}
+              className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
             >
-              <item.icon className="w-[18px] h-[18px]" />
-              {item.name}
+              <item.icon className="w-[18px] h-[18px] shrink-0" />
+              <span className="truncate">{item.name}</span>
             </Link>
           );
         })}
 
         {isAdmin && (
           <>
-            <p className="px-3 mt-6 mb-2 text-[10px] font-semibold text-neutral-400 uppercase tracking-widest">Admin</p>
+            <p className="px-3 mt-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin</p>
             {adminNav.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={isActive ? 'sidebar-link-active' : 'sidebar-link'}
+                  className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
                 >
-                  <item.icon className="w-[18px] h-[18px]" />
-                  {item.name}
+                  <item.icon className="w-[18px] h-[18px] shrink-0" />
+                  <span className="truncate">{item.name}</span>
                 </Link>
               );
             })}
@@ -85,16 +85,22 @@ export default function Sidebar() {
       </nav>
 
       {/* User Info & Logout */}
-      <div className="border-t border-neutral-100 px-4 py-4">
+      <div className="border-t border-slate-100 px-4 py-3.5 bg-slate-50/50 mt-auto shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-bold">
-            {user?.name?.charAt(0) || 'U'}
+          <div className="w-9 h-9 rounded-xl bg-red-50 text-[#c41230] border border-red-100 flex items-center justify-center text-sm font-bold shrink-0">
+            {user?.name?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-neutral-800 truncate">{user?.name}</p>
-            <p className="text-[11px] text-neutral-400">{user?.role}</p>
+            <p className="text-xs font-semibold text-slate-800 truncate leading-tight">{user?.name}</p>
+            <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-slate-200/70 text-slate-600">
+              {user?.role}
+            </span>
           </div>
-          <button onClick={logout} className="text-neutral-400 hover:text-red-500 transition-colors" title="Keluar">
+          <button 
+            onClick={logout} 
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors" 
+            title="Keluar"
+          >
             <LogOut className="w-[18px] h-[18px]" />
           </button>
         </div>

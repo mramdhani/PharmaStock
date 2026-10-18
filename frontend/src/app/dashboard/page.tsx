@@ -10,7 +10,10 @@ import {
   TrendingDown,
   Activity,
   XCircle,
+  Clock,
+  ArrowRight,
 } from 'lucide-react';
+import Link from 'next/link';
 import {
   BarChart,
   Bar,
@@ -24,37 +27,28 @@ import {
 import { dashboardApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 
-interface KPI {
-  total_products: number;
-  total_categories: number;
-  total_stock_units: number;
-  low_stock_products_count: number;
-  expiring_batches_count: number;
-  expired_batches_count: number;
-}
-
-interface ChartDay {
-  date: string;
-  stock_in: number;
-  stock_out: number;
-}
-
-interface Movement {
-  id: string;
-  type: string;
-  quantity: number;
-  reference_no: string | null;
-  created_at: string;
-  product_name: string;
-  product_sku: string;
-  batch_number: string;
-  user_name: string;
-}
-
 interface DashboardData {
-  kpi: KPI;
-  chart_data_7_days: ChartDay[];
-  recent_movements: Movement[];
+  kpi: {
+    total_products: number;
+    total_categories: number;
+    total_stock_units: number;
+    low_stock_products_count: number;
+    expiring_batches_count: number;
+    expired_batches_count: number;
+  };
+  chart_data_7_days: {
+    date: string;
+    stock_in: number;
+    stock_out: number;
+  }[];
+  recent_movements: {
+    id: string;
+    type: 'IN' | 'OUT';
+    quantity: number;
+    batch_number: string;
+    product_name: string;
+    created_at: string;
+  }[];
 }
 
 export default function DashboardPage() {
@@ -73,16 +67,17 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="page-content">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="card card-body">
-              <div className="skeleton h-4 w-24 mb-3" />
-              <div className="skeleton h-8 w-16" />
+            <div key={i} className="card p-5">
+              <div className="skeleton h-4 w-28 mb-3" />
+              <div className="skeleton h-8 w-20 mb-2" />
+              <div className="skeleton h-3 w-32" />
             </div>
           ))}
         </div>
-        <div className="card card-body">
-          <div className="skeleton h-64 w-full" />
+        <div className="card p-6">
+          <div className="skeleton h-72 w-full" />
         </div>
       </div>
     );
@@ -92,42 +87,63 @@ export default function DashboardPage() {
 
   const kpiCards = [
     {
-      label: 'Total Produk',
+      label: 'Total Katalog Obat',
       value: data.kpi.total_products,
+      subtext: 'Obat terdaftar aktif',
       icon: Package,
-      color: 'bg-primary-100 text-primary-700',
+      badgeText: 'Katalog',
+      badgeClass: 'badge-neutral',
+      iconBg: 'bg-red-50 text-[#c41230]',
+      alert: false,
     },
     {
-      label: 'Kategori',
+      label: 'Kategori Farmasi',
       value: data.kpi.total_categories,
+      subtext: 'Klasifikasi terapi',
       icon: Layers,
-      color: 'bg-blue-100 text-blue-700',
+      badgeText: 'Kategori',
+      badgeClass: 'badge-neutral',
+      iconBg: 'bg-blue-50 text-blue-600',
+      alert: false,
     },
     {
       label: 'Total Unit Stok',
       value: data.kpi.total_stock_units.toLocaleString('id-ID'),
+      subtext: 'Unit di seluruh batch',
       icon: Archive,
-      color: 'bg-green-100 text-green-700',
+      badgeText: 'Tersedia',
+      badgeClass: 'badge-success',
+      iconBg: 'bg-emerald-50 text-emerald-600',
+      alert: false,
     },
     {
       label: 'Stok Menipis',
       value: data.kpi.low_stock_products_count,
+      subtext: data.kpi.low_stock_products_count > 0 ? 'Perlu pengadaan segera' : 'Stok dalam batas aman',
       icon: AlertTriangle,
-      color: 'bg-amber-100 text-amber-700',
+      badgeText: data.kpi.low_stock_products_count > 0 ? 'Perlu Restock' : 'Aman',
+      badgeClass: data.kpi.low_stock_products_count > 0 ? 'badge-warning' : 'badge-success',
+      iconBg: data.kpi.low_stock_products_count > 0 ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-600',
       alert: data.kpi.low_stock_products_count > 0,
     },
     {
       label: 'Mendekati Expired',
       value: data.kpi.expiring_batches_count,
-      icon: Activity,
-      color: 'bg-orange-100 text-orange-700',
+      subtext: 'Kadaluarsa dalam < 30 hari',
+      icon: Clock,
+      badgeText: data.kpi.expiring_batches_count > 0 ? 'Perhatian FEFO' : 'Tidak Ada',
+      badgeClass: data.kpi.expiring_batches_count > 0 ? 'badge-warning' : 'badge-success',
+      iconBg: data.kpi.expiring_batches_count > 0 ? 'bg-orange-50 text-orange-600' : 'bg-slate-100 text-slate-600',
       alert: data.kpi.expiring_batches_count > 0,
     },
     {
-      label: 'Sudah Expired',
+      label: 'Batch Expired',
       value: data.kpi.expired_batches_count,
+      subtext: data.kpi.expired_batches_count > 0 ? 'Karantina & musnahkan' : 'Semua batch aman',
       icon: XCircle,
-      color: 'bg-red-100 text-red-700',
+      badgeText: data.kpi.expired_batches_count > 0 ? 'Harus Ditarik' : 'Nol Batch',
+      badgeClass: data.kpi.expired_batches_count > 0 ? 'badge-danger' : 'badge-success',
+      iconBg: data.kpi.expired_batches_count > 0 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600',
       alert: data.kpi.expired_batches_count > 0,
     },
   ];
@@ -142,26 +158,40 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="text-sm text-neutral-500 mt-0.5">
-            Selamat datang, <span className="font-medium text-neutral-700">{user?.name}</span>
+          <h1 className="page-title">Dashboard Operasional</h1>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Sistem Inventaris Farmasi Dexa Group · Masuk sebagai <span className="font-semibold text-slate-800">{user?.name}</span>
           </p>
         </div>
-        <span className="badge-info">{user?.role}</span>
+        <div className="flex items-center gap-2">
+          <span className="badge-info">{user?.role}</span>
+        </div>
       </div>
 
       {/* Content */}
       <div className="page-content">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        {/* KPI Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
           {kpiCards.map((card) => (
-            <div key={card.label} className={`kpi-card ${card.alert ? 'ring-2 ring-amber-300' : ''}`}>
-              <div className={`kpi-icon ${card.color}`}>
-                <card.icon className="w-6 h-6" />
+            <div
+              key={card.label}
+              className={`kpi-card ${
+                card.alert
+                  ? 'border-amber-200 bg-amber-50/20'
+                  : ''
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${card.iconBg}`}>
+                  <card.icon className="w-5 h-5" />
+                </div>
+                <span className={card.badgeClass}>{card.badgeText}</span>
               </div>
+
               <div>
                 <p className="kpi-value">{card.value}</p>
-                <p className="kpi-label">{card.label}</p>
+                <p className="kpi-label mt-0.5">{card.label}</p>
+                <p className="text-[11px] text-slate-400 mt-1">{card.subtext}</p>
               </div>
             </div>
           ))}
@@ -170,44 +200,60 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Chart */}
           <div className="xl:col-span-2 card">
-            <div className="card-header">Tren Stok 7 Hari Terakhir</div>
+            <div className="card-header">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Tren Mutasi Stok 7 Hari Terakhir</h3>
+                <p className="text-xs text-slate-400 font-normal mt-0.5">Monitoring pergerakan keluar-masuk unit farmasi</p>
+              </div>
+            </div>
             <div className="card-body">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: '#e2e8f0' }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{
-                      borderRadius: '12px',
-                      border: '1px solid #e5e5e5',
-                      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '10px',
+                      border: '1.5px solid #e2e8f0',
+                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.07)',
+                      fontSize: '12px',
                     }}
                   />
-                  <Legend />
-                  <Bar dataKey="stock_in" name="Stok Masuk" fill="#dc2626" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="stock_out" name="Stok Keluar" fill="#fca5a5" radius={[4, 4, 0, 0]} />
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                  <Bar dataKey="stock_in" name="Stok Masuk" fill="#c41230" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="stock_out" name="Stok Keluar" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Recent Movements */}
-          <div className="card">
-            <div className="card-header">Aktivitas Terbaru</div>
-            <div className="divide-y divide-neutral-100">
+          <div className="card flex flex-col">
+            <div className="card-header">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Mutasi Terbaru</h3>
+                <p className="text-xs text-slate-400 font-normal mt-0.5">Riwayat transaksi stok terakhir</p>
+              </div>
+              <Link href="/dashboard/movements" className="text-xs font-semibold text-[#c41230] hover:underline flex items-center gap-1">
+                Buku Besar <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+            <div className="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-[380px]">
               {data.recent_movements.length === 0 ? (
-                <div className="empty-state py-8">
-                  <Activity className="empty-state-icon" />
-                  <p className="empty-state-title">Belum ada aktivitas</p>
+                <div className="p-8 text-center">
+                  <Activity className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-semibold text-slate-600">Belum ada mutasi stok</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Lakukan stok masuk untuk memulai pencatatan.</p>
                 </div>
               ) : (
                 data.recent_movements.map((m) => (
-                  <div key={m.id} className="px-5 py-3.5 hover:bg-neutral-50 transition-colors">
+                  <div key={m.id} className="p-3.5 hover:bg-slate-50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          m.type === 'IN' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                          m.type === 'IN' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200'
                         }`}
                       >
                         {m.type === 'IN' ? (
@@ -217,28 +263,14 @@ export default function DashboardPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-neutral-800 truncate">{m.product_name}</p>
-                        <p className="text-[11px] text-neutral-400">
-                          {m.batch_number} · {m.user_name}
+                        <p className="text-xs font-bold text-slate-900 truncate">{m.product_name}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Batch: <span className="font-medium text-slate-600">{m.batch_number}</span> · {new Date(m.created_at).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p
-                          className={`text-sm font-semibold ${
-                            m.type === 'IN' ? 'text-green-600' : 'text-red-600'
-                          }`}
-                        >
-                          {m.type === 'IN' ? '+' : '-'}{m.quantity}
-                        </p>
-                        <p className="text-[10px] text-neutral-400">
-                          {new Date(m.created_at).toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${m.type === 'IN' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                        {m.type === 'IN' ? `+${m.quantity}` : `-${m.quantity}`}
+                      </span>
                     </div>
                   </div>
                 ))

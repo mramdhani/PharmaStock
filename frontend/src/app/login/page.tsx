@@ -69,7 +69,7 @@ export default function LoginPage() {
       <div className="login-card relative">
         {/* Logo */}
         <div className="login-logo">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mb-4 shadow-lg">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#c41230] to-[#8e0c23] flex items-center justify-center mb-4 shadow-lg shadow-red-900/20">
             <Cross className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-neutral-900">PharmaStock</h2>
