@@ -18,21 +18,45 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: Auto-logout jika token expired (401)
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
-      const path = window.location.pathname;
-      if (path !== '/login') {
-        localStorage.removeItem('pharmastock_token');
-        localStorage.removeItem('pharmastock_user');
-        window.location.href = '/login';
-      }
+// Helper: Ekstraksi pesan error API yang ramah pengguna
+export function getApiErrorMessage(err: unknown, fallback = 'Terjadi kesalahan sistem'): string {
+  const axiosErr = err as {
+    response?: {
+      data?: {
+        message?: string | string[];
+        errors?: string | string[];
+      };
+    };
+  };
+
+  const data = axiosErr.response?.data;
+  if (!data) return fallback;
+
+  // 1. Pesan validasi array dari DTO (misal: ['name must be a string'])
+  if (Array.isArray(data.errors) && data.errors.length > 0) {
+    return data.errors.join(', ');
+  }
+  // 2. Pesan spesifik dari backend (misal: "Input pada field 'name' mengandung kata kasar/dilarang...")
+  if (typeof data.message === 'string' && data.message.trim()) {
+    if (data.message !== 'Validation failed') {
+      return data.message;
     }
-    return Promise.reject(error);
-  },
-);
+  }
+  if (Array.isArray(data.message) && data.message.length > 0) {
+    return data.message.join(', ');
+  }
+  // 3. String errors yang bukan nama status HTTP generik
+  if (
+    typeof data.errors === 'string' &&
+    !['Bad Request', 'Unauthorized', 'Forbidden', 'Not Found', 'Internal Server Error'].includes(
+      data.errors,
+    )
+  ) {
+    return data.errors;
+  }
+
+  return (typeof data.message === 'string' && data.message) || fallback;
+}
 
 // ============ Auth ============
 export const authApi = {
@@ -84,6 +108,11 @@ export const usersApi = {
   getAll: (params?: any) => api.get('/users', { params }),
   create: (data: any) => api.post('/users', data),
   update: (id: string, data: any) => api.patch(`/users/${id}`, data),
+};
+
+// ============ System ============
+export const systemApi = {
+  resetDemo: () => api.post('/system/reset-demo'),
 };
 
 export default api;

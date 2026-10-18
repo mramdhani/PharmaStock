@@ -48,11 +48,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
           message = 'Validation failed';
           errors = res.message;
         } else if (statusCode === HttpStatus.TOO_MANY_REQUESTS) {
-          message = 'Batas percobaan terlampaui (Rate Limit). Demi keamanan, akses dibatasi sementara.';
+          message =
+            'Batas percobaan terlampaui (Rate Limit). Demi keamanan, akses dibatasi sementara.';
           errors = res.message || 'Too Many Requests';
         } else {
           message = res.message || exception.message;
-          errors = res.error || null;
+          // Jangan letakkan 'Bad Request' / 'Conflict' sebagai errors agar tidak menutupi pesan spesifik
+          errors = Array.isArray(res.error) ? res.error : null;
         }
       }
     } else {

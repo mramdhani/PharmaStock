@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Power, Package, Search, AlertTriangle } from 'lucide-react';
-import { productsApi, categoriesApi } from '@/lib/api';
+import { productsApi, categoriesApi, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
+import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 import Modal from '@/components/Modal';
 
 interface Product {
@@ -95,6 +96,13 @@ export default function ProductsPage() {
       toast.warning('Nama produk obat wajib diisi');
       return;
     }
+
+    const profanity = checkProfanity(form.name) || checkProfanity(form.sku);
+    if (profanity) {
+      toast.error(`Input mengandung kata kasar/terlarang ("${profanity}"). Mohon gunakan istilah farmasi yang sopan.`);
+      return;
+    }
+
     if (form.minimum_stock === undefined || form.minimum_stock < 0) {
       toast.warning('Batas minimum stok tidak boleh negatif');
       return;
@@ -112,17 +120,7 @@ export default function ProductsPage() {
       setModalOpen(false);
       fetchProducts();
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: {
-          data?: {
-            message?: string | string[];
-            errors?: string | string[];
-          };
-        };
-      };
-      const raw = axiosErr.response?.data?.errors || axiosErr.response?.data?.message;
-      const displayMsg = Array.isArray(raw) ? raw.join(', ') : (raw || 'Gagal menyimpan produk');
-      toast.error(displayMsg);
+      toast.error(getApiErrorMessage(err, 'Gagal menyimpan produk'));
     } finally {
       setSaving(false);
     }
@@ -292,7 +290,7 @@ export default function ProductsPage() {
             </div>
             <div>
               <label className="label">Nama Produk Obat <span className="text-red-500">*</span></label>
-              <input className="input" placeholder="Contoh: Amoxicillin 500mg" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <input className="input" placeholder="Contoh: Amoxicillin 500mg" value={form.name} onChange={(e) => setForm({ ...form, name: maskInputProfanity(e.target.value) })} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

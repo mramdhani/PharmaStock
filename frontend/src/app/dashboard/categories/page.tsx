@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Layers, Search } from 'lucide-react';
-import { categoriesApi } from '@/lib/api';
+import { categoriesApi, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
+import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 import Modal from '@/components/Modal';
 
 interface Category {
@@ -58,6 +59,13 @@ export default function CategoriesPage() {
       toast.warning('Nama kategori wajib diisi');
       return;
     }
+
+    const profanity = checkProfanity(name);
+    if (profanity) {
+      toast.error(`Input nama kategori mengandung kata kasar/terlarang ("${profanity}"). Mohon gunakan istilah farmasi yang sopan.`);
+      return;
+    }
+
     setSaving(true);
     try {
       if (editId) {
@@ -70,17 +78,7 @@ export default function CategoriesPage() {
       setModalOpen(false);
       fetchData();
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: {
-          data?: {
-            message?: string | string[];
-            errors?: string | string[];
-          };
-        };
-      };
-      const raw = axiosErr.response?.data?.errors || axiosErr.response?.data?.message;
-      const displayMsg = Array.isArray(raw) ? raw.join(', ') : (raw || 'Gagal menyimpan kategori');
-      toast.error(displayMsg);
+      toast.error(getApiErrorMessage(err, 'Gagal menyimpan kategori'));
     } finally {
       setSaving(false);
     }
@@ -202,7 +200,7 @@ export default function CategoriesPage() {
             className="input"
             placeholder="Contoh: Analgesic, Antibiotic..."
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setName(maskInputProfanity(e.target.value))}
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             autoFocus
           />

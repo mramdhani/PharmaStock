@@ -86,16 +86,32 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id);
 
-    // Proteksi akun master admin
-    if (user.email === 'admin@pharmastock.com') {
+    // Proteksi akun bawaan demo publik (admin, staff, viewer)
+    const DEMO_EMAILS = [
+      'admin@pharmastock.com',
+      'staff@pharmastock.com',
+      'viewer@pharmastock.com',
+    ];
+
+    if (DEMO_EMAILS.includes(user.email)) {
       if (updateUserDto.is_active === false) {
         throw new BadRequestException(
-          'Akun master admin utama tidak boleh dinonaktifkan demi keamanan',
+          'Akun demo bawaan sistem tidak boleh dinonaktifkan demi kenyamanan pengunjung publik.',
         );
       }
-      if (updateUserDto.role && updateUserDto.role !== UserRole.ADMIN) {
+      if (updateUserDto.email && updateUserDto.email !== user.email) {
         throw new BadRequestException(
-          'Role akun master admin utama tidak boleh diubah',
+          'Email akun demo bawaan sistem tidak boleh diubah demi kenyamanan pengunjung publik.',
+        );
+      }
+      if (updateUserDto.password) {
+        throw new BadRequestException(
+          'Password akun demo bawaan sistem terkunci demi keamanan agar pengunjung lain tetap dapat login.',
+        );
+      }
+      if (user.email === 'admin@pharmastock.com' && updateUserDto.role && updateUserDto.role !== UserRole.ADMIN) {
+        throw new BadRequestException(
+          'Role akun master admin utama tidak boleh diubah.',
         );
       }
     }

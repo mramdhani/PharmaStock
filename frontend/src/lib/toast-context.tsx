@@ -97,7 +97,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     >
       {children}
       {/* Toast Container placed at top z-index above all modals */}
-      <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+      <div className="toast-container" style={{ zIndex: 99999 }}>
         {toasts.map((t) => {
           const style = toastStyles[t.type];
           return (

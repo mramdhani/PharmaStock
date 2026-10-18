@@ -1,0 +1,79 @@
+services:
+  # ==========================================
+  # Database PostgreSQL 16
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: pharmastock_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-pharmastock}
+      POSTGRES_USER: ${DB_USER:-pharmastock_app}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pharmastock_dev_password_2026}
+    volumes:
+      - pharmastock_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pharmastock_app} -d ${DB_NAME:-pharmastock}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pharmastock_net
+
+  # ==========================================
+  # Backend API (NestJS)
+  # ==========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pharmastock_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-pharmastock_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pharmastock_dev_password_2026}
+      DB_NAME: ${DB_NAME:-pharmastock}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_pharmastock_jwt_key_2026_change_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      AUTO_SEED: ${AUTO_SEED:-true}
+    ports:
+      - "3001:3001"
+    networks:
+      - pharmastock_net
+
+  # ==========================================
+  # Frontend Web App (Next.js)
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
+    container_name: pharmastock_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    networks:
+      - pharmastock_net
+
+volumes:
+  pharmastock_pgdata:
+    driver: local
+
+networks:
+  pharmastock_net:
+    driver: bridge

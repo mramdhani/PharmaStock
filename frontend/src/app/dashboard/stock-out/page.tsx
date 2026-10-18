@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowUpFromLine, CheckCircle, PackageMinus, AlertCircle } from 'lucide-react';
-import { batchesApi, stockApi } from '@/lib/api';
+import { batchesApi, stockApi, getApiErrorMessage } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
+import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 
 interface Batch { id: string; batch_number: string; current_stock: number; product: { name: string; sku: string; unit: string } }
 
@@ -23,7 +24,21 @@ export default function StockOutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.batch_id || !form.quantity || isOverQuantity) return;
+    if (!form.batch_id || !form.quantity || Number(form.quantity) <= 0) {
+      toast.warning('Pilih batch dan tentukan kuantitas keluar yang valid');
+      return;
+    }
+    if (isOverQuantity) {
+      toast.warning('Kuantitas keluar melebihi stok batch yang tersedia');
+      return;
+    }
+
+    const profanity = checkProfanity(form.reference_no) || checkProfanity(form.notes);
+    if (profanity) {
+      toast.error(`Catatan/referensi mengandung kata kasar/terlarang ("${profanity}"). Mohon gunakan bahasa yang profesional.`);
+      return;
+    }
+
     setLoading(true);
     try {
       await stockApi.stockOut({
@@ -39,8 +54,7 @@ export default function StockOutPage() {
       setBatches(res.data.data.items);
       setTimeout(() => setSuccess(false), 4000);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosErr.response?.data?.message || 'Gagal mencatat stok keluar');
+      toast.error(getApiErrorMessage(err, 'Gagal mencatat stok keluar'));
     } finally {
       setLoading(false);
     }
@@ -138,7 +152,7 @@ export default function StockOutPage() {
                   className="input"
                   placeholder="Contoh: DO-2026-RS-001 (opsional)"
                   value={form.reference_no}
-                  onChange={(e) => setForm({ ...form, reference_no: e.target.value })}
+                  onChange={(e) => setForm({ ...form, reference_no: maskInputProfanity(e.target.value) })}
                 />
               </div>
 
@@ -149,7 +163,7 @@ export default function StockOutPage() {
                   rows={3}
                   placeholder="Tujuan distribusi (Nama RS / Apotek / Unit Farmasi)..."
                   value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  onChange={(e) => setForm({ ...form, notes: maskInputProfanity(e.target.value) })}
                 />
               </div>
 

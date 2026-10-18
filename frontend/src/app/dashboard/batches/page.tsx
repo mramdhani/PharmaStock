@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Archive, Search, Clock, AlertTriangle } from 'lucide-react';
-import { batchesApi, productsApi } from '@/lib/api';
+import { batchesApi, productsApi, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
+import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 import Modal from '@/components/Modal';
 
 interface Batch {
@@ -67,6 +68,13 @@ export default function BatchesPage() {
       toast.warning('Nomor batch wajib diisi');
       return;
     }
+
+    const profanity = checkProfanity(form.batch_number);
+    if (profanity) {
+      toast.error(`Nomor batch mengandung kata kasar/terlarang ("${profanity}"). Mohon gunakan format nomor batch resmi.`);
+      return;
+    }
+
     if (!form.expiry_date) {
       toast.warning('Tanggal kadaluarsa (expired date) wajib diisi');
       return;
@@ -80,17 +88,7 @@ export default function BatchesPage() {
       setForm({ product_id: '', batch_number: '', expiry_date: '' });
       fetchBatches();
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: {
-          data?: {
-            message?: string | string[];
-            errors?: string | string[];
-          };
-        };
-      };
-      const raw = axiosErr.response?.data?.errors || axiosErr.response?.data?.message;
-      const displayMsg = Array.isArray(raw) ? raw.join(', ') : (raw || 'Gagal menambahkan batch');
-      toast.error(displayMsg);
+      toast.error(getApiErrorMessage(err, 'Gagal menambahkan batch'));
     } finally {
       setSaving(false);
     }
@@ -214,7 +212,7 @@ export default function BatchesPage() {
           </div>
           <div>
             <label className="label">Nomor Batch <span className="text-red-500">*</span></label>
-            <input className="input uppercase" placeholder="Contoh: BAT-DEXA-2026A" value={form.batch_number} onChange={(e) => setForm({ ...form, batch_number: e.target.value.toUpperCase() })} />
+            <input className="input uppercase" placeholder="Contoh: BAT-DEXA-2026A" value={form.batch_number} onChange={(e) => setForm({ ...form, batch_number: maskInputProfanity(e.target.value).toUpperCase() })} />
           </div>
           <div>
             <label className="label">Tanggal Kadaluarsa (Expired Date) <span className="text-red-500">*</span></label>

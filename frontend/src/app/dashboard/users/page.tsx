@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Users, Pencil, Shield, UserCog, BookOpen } from 'lucide-react';
-import { usersApi } from '@/lib/api';
+import { Plus, Users, Pencil, Shield, UserCog, BookOpen, RotateCcw } from 'lucide-react';
+import { usersApi, systemApi, getApiErrorMessage } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
+import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 import Modal from '@/components/Modal';
 
 interface User {
@@ -36,6 +37,7 @@ export default function UsersPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -71,6 +73,13 @@ export default function UsersPage() {
       toast.warning('Alamat email pengguna wajib diisi');
       return;
     }
+
+    const profanity = checkProfanity(form.name) || checkProfanity(form.email);
+    if (profanity) {
+      toast.error(`Input nama/email mengandung kata kasar/terlarang ("${profanity}"). Mohon gunakan nama yang sopan.`);
+      return;
+    }
+
     if (!editId && !form.password) {
       toast.warning('Kata sandi wajib diisi untuk pengguna baru');
       return;
@@ -94,17 +103,7 @@ export default function UsersPage() {
       setModalOpen(false);
       fetchUsers();
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: {
-          data?: {
-            message?: string | string[];
-            errors?: string | string[];
-          };
-        };
-      };
-      const raw = axiosErr.response?.data?.errors || axiosErr.response?.data?.message;
-      const displayMsg = Array.isArray(raw) ? raw.join(', ') : (raw || 'Gagal menyimpan pengguna');
-      toast.error(displayMsg);
+      toast.error(getApiErrorMessage(err, 'Gagal menyimpan pengguna'));
     } finally {
       setSaving(false);
     }
@@ -116,8 +115,28 @@ export default function UsersPage() {
       toast.success(u.is_active ? 'Pengguna dinonaktifkan' : 'Pengguna diaktifkan kembali');
       fetchUsers();
     } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Gagal mengubah status'));
+    }
+  };
+
+  const handleResetDemo = async () => {
+    if (
+      !window.confirm(
+        'PERINGATAN: Apakah Anda yakin ingin mereset seluruh data demo kembali ke kondisi standar pabrik? Seluruh produk, batch, dan pergerakan stok uji coba akan dikembalikan ke data awal Dexa Group.',
+      )
+    ) {
+      return;
+    }
+    setResetting(true);
+    try {
+      await systemApi.resetDemo();
+      toast.success('Database demo berhasil dipulihkan ke kondisi standar pabrik!');
+      fetchUsers();
+    } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosErr.response?.data?.message || 'Gagal mengubah status');
+      toast.error(axiosErr.response?.data?.message || 'Gagal memulihkan database demo');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -208,6 +227,28 @@ export default function UsersPage() {
             </table>
           </div>
         </div>
+
+        {/* Card Pemeliharaan Lingkungan Demo */}
+        <div className="card border border-red-200 bg-red-50/40 p-5 mt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-red-900 flex items-center gap-2">
+                <RotateCcw className="w-4 h-4 text-red-600" /> Pemeliharaan & Reset Database Demo
+              </h3>
+              <p className="text-xs text-red-700/80 mt-1">
+                Jika produk, batch, atau stok diacak-acak oleh pengunjung publik, Admin dapat memulihkan seluruh data kembali ke kondisi awal Dexa Group secara instan.
+              </p>
+            </div>
+            <button
+              onClick={handleResetDemo}
+              disabled={resetting}
+              className="btn-danger btn-sm whitespace-nowrap"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
+              {resetting ? 'Memulihkan Data...' : 'Reset Data Demo'}
+            </button>
+          </div>
+        </div>
       </div>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Edit Pengguna' : 'Tambah Pengguna'}
@@ -221,7 +262,7 @@ export default function UsersPage() {
         <div className="space-y-4">
           <div>
             <label className="label">Nama Lengkap <span className="text-red-500">*</span></label>
-            <input className="input" placeholder="Contoh: Budi Santoso" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className="input" placeholder="Contoh: Budi Santoso" value={form.name} onChange={(e) => setForm({ ...form, name: maskInputProfanity(e.target.value) })} />
           </div>
           <div>
             <label className="label">Email Pengguna <span className="text-red-500">*</span></label>

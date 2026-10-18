@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowDownToLine, CheckCircle, PackageCheck, AlertCircle } from 'lucide-react';
-import { batchesApi, stockApi } from '@/lib/api';
+import { batchesApi, stockApi, getApiErrorMessage } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
+import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 
 interface Batch { id: string; batch_number: string; current_stock: number; product: { name: string; sku: string; unit: string } }
 
@@ -22,7 +23,17 @@ export default function StockInPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.batch_id || !form.quantity) return;
+    if (!form.batch_id || !form.quantity || Number(form.quantity) <= 0) {
+      toast.warning('Pilih batch tujuan dan masukkan kuantitas masuk yang valid');
+      return;
+    }
+
+    const profanity = checkProfanity(form.reference_no) || checkProfanity(form.notes);
+    if (profanity) {
+      toast.error(`Catatan/referensi mengandung kata kasar/terlarang ("${profanity}"). Mohon gunakan bahasa yang profesional.`);
+      return;
+    }
+
     setLoading(true);
     try {
       await stockApi.stockIn({
@@ -39,8 +50,7 @@ export default function StockInPage() {
       setBatches(res.data.data.items);
       setTimeout(() => setSuccess(false), 4000);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosErr.response?.data?.message || 'Gagal mencatat stok masuk');
+      toast.error(getApiErrorMessage(err, 'Gagal mencatat stok masuk'));
     } finally {
       setLoading(false);
     }
@@ -132,7 +142,7 @@ export default function StockInPage() {
                   className="input"
                   placeholder="Contoh: PO-2026-DEXA-001 (opsional)"
                   value={form.reference_no}
-                  onChange={(e) => setForm({ ...form, reference_no: e.target.value })}
+                  onChange={(e) => setForm({ ...form, reference_no: maskInputProfanity(e.target.value) })}
                 />
               </div>
 
@@ -143,7 +153,7 @@ export default function StockInPage() {
                   rows={3}
                   placeholder="Keterangan pengiriman, nama supplier, atau nomor surat jalan..."
                   value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  onChange={(e) => setForm({ ...form, notes: maskInputProfanity(e.target.value) })}
                 />
               </div>
 

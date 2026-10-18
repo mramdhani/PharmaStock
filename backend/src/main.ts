@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json } from 'express';
+import helmet from 'helmet';
+import { SecuritySanitizerPipe } from './common/pipes/security-sanitizer.pipe';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -12,10 +14,18 @@ async function bootstrap() {
   // Semua endpoint diawali /api/v1, contoh: /api/v1/health
   app.setGlobalPrefix('api/v1');
 
-  // Keamanan: batasi ukuran body request (cegah request raksasa).
+  // Keamanan 1: HTTP Security Headers via Helmet
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Diperlukan agar Swagger UI dapat memuat stylesheet & script interaktifnya
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+
+  // Keamanan 2: Batasi ukuran body request (cegah payload raksasa / DoS)
   app.use(json({ limit: '100kb' }));
 
-  // Keamanan: hanya frontend kita yang boleh memanggil API dari browser.
+  // Keamanan 3: CORS terproteksi
   app.enableCors({
     origin: config.getOrThrow<string>('FRONTEND_URL'),
     credentials: true,
@@ -28,11 +38,9 @@ async function bootstrap() {
     ],
   });
 
-  // Validasi global untuk semua DTO:
-  // - whitelist: buang field yang tidak ada di DTO
-  // - forbidNonWhitelisted: tolak (400) kalau ada field asing
-  // - transform: ubah payload menjadi instance class DTO (misal "10" -> 10)
+  // Keamanan 4: Sanitasi XSS, Filter Kata Kasar, dan Validasi DTO Ketat
   app.useGlobalPipes(
+    new SecuritySanitizerPipe(),
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,

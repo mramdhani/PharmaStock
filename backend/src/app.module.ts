@@ -16,6 +16,7 @@ import { typeOrmConfigFactory } from './config/typeorm.config';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ProductsModule } from './products/products.module';
 import { StockModule } from './stock/stock.module';
+import { SystemModule } from './system/system.module';
 import { UsersModule } from './users/users.module';
 
 /**
@@ -54,6 +55,7 @@ import { UsersModule } from './users/users.module';
     BatchesModule,
     StockModule,
     DashboardModule,
+    SystemModule,
   ],
   controllers: [AppController],
   providers: [
