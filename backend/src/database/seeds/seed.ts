@@ -14,6 +14,11 @@ import { User, UserRole } from '../../users/entities/user.entity';
 export async function seed() {
   console.log('🌱 Menjalankan Seeder Database PharmaStock...');
   await AppDataSource.initialize();
+  try {
+    await AppDataSource.runMigrations();
+  } catch (err) {
+    console.warn('⚠️ Catatan migrasi:', err);
+  }
 
   const userRepo = AppDataSource.getRepository(User);
   const categoryRepo = AppDataSource.getRepository(Category);

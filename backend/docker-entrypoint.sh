@@ -1,12 +1,11 @@
 #!/bin/sh
 set -e
 
-echo "🚀 [PharmaStock] Memeriksa koneksi database dan menjalankan migrasi..."
-npx typeorm migration:run -d dist/database/data-source.js || echo "⚠️ Migrasi sudah up-to-date atau dilewati."
+echo "🚀 [PharmaStock] Memeriksa koneksi database..."
 
 if [ "$AUTO_SEED" = "true" ]; then
-  echo "🌱 [PharmaStock] Menjalankan seeder otomatis data demo..."
-  node dist/database/seeds/seed.js || echo "⚠️ Seeder dilewati."
+  echo "🌱 [PharmaStock] Menjalankan migrasi & seeder data demo..."
+  node dist/database/seeds/seed.js || echo "⚠️ Seeder selesai atau dilewati."
 fi
 
 echo "✨ [PharmaStock] Menjalankan server NestJS..."
