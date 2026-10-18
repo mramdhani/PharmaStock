@@ -19,6 +19,13 @@ async function bootstrap() {
   app.enableCors({
     origin: config.getOrThrow<string>('FRONTEND_URL'),
     credentials: true,
+    exposedHeaders: [
+      'Retry-After',
+      'retry-after',
+      'X-RateLimit-Limit',
+      'X-RateLimit-Remaining',
+      'X-RateLimit-Reset',
+    ],
   });
 
   // Validasi global untuk semua DTO:

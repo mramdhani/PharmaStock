@@ -59,17 +59,38 @@ export default function BatchesPage() {
   };
 
   const handleSave = async () => {
-    if (!form.product_id || !form.batch_number.trim() || !form.expiry_date) return;
+    if (!form.product_id) {
+      toast.warning('Pilih produk obat untuk batch ini terlebih dahulu');
+      return;
+    }
+    if (!form.batch_number.trim()) {
+      toast.warning('Nomor batch wajib diisi');
+      return;
+    }
+    if (!form.expiry_date) {
+      toast.warning('Tanggal kadaluarsa (expired date) wajib diisi');
+      return;
+    }
+
     setSaving(true);
     try {
       await batchesApi.create({ ...form, batch_number: form.batch_number.toUpperCase() });
-      toast.success('Batch baru berhasil ditambahkan');
+      toast.success(`Batch "${form.batch_number.toUpperCase()}" berhasil ditambahkan`);
       setModalOpen(false);
       setForm({ product_id: '', batch_number: '', expiry_date: '' });
       fetchBatches();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosErr.response?.data?.message || 'Gagal menambahkan batch');
+      const axiosErr = err as {
+        response?: {
+          data?: {
+            message?: string | string[];
+            errors?: string | string[];
+          };
+        };
+      };
+      const raw = axiosErr.response?.data?.errors || axiosErr.response?.data?.message;
+      const displayMsg = Array.isArray(raw) ? raw.join(', ') : (raw || 'Gagal menambahkan batch');
+      toast.error(displayMsg);
     } finally {
       setSaving(false);
     }
@@ -87,9 +108,15 @@ export default function BatchesPage() {
       </div>
 
       <div className="page-content">
-        <div className="mb-4 max-w-sm relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-          <input className="input pl-9" placeholder="Cari batch..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+        {/* Search */}
+        <div className="relative w-full max-w-sm mb-5">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            className="input !pl-10"
+            placeholder="Cari nomor batch..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          />
         </div>
 
         <div className="card">
@@ -179,18 +206,18 @@ export default function BatchesPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="label">Produk</label>
+            <label className="label">Produk Obat <span className="text-red-500">*</span></label>
             <select className="select" value={form.product_id} onChange={(e) => setForm({ ...form, product_id: e.target.value })}>
-              <option value="">Pilih produk</option>
+              <option value="">Pilih produk obat...</option>
               {products.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Nomor Batch</label>
-            <input className="input uppercase" placeholder="BAT-XXX-2026A" value={form.batch_number} onChange={(e) => setForm({ ...form, batch_number: e.target.value.toUpperCase() })} />
+            <label className="label">Nomor Batch <span className="text-red-500">*</span></label>
+            <input className="input uppercase" placeholder="Contoh: BAT-DEXA-2026A" value={form.batch_number} onChange={(e) => setForm({ ...form, batch_number: e.target.value.toUpperCase() })} />
           </div>
           <div>
-            <label className="label">Tanggal Kedaluwarsa</label>
+            <label className="label">Tanggal Kadaluarsa (Expired Date) <span className="text-red-500">*</span></label>
             <input className="input" type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} />
           </div>
         </div>

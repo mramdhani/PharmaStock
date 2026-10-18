@@ -30,11 +30,11 @@ import { UsersModule } from './users/users.module';
       validationSchema: envValidationSchema,
     }),
 
-    // 2. Rate Limiting: Default 60 request per menit per alamat IP
+    // 2. Rate Limiting: 300 request per menit per alamat IP (aman dan leluasa untuk eksplorasi demo)
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
-        limit: 60,
+        limit: 300,
       },
     ]),
 

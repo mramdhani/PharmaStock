@@ -83,21 +83,46 @@ export default function ProductsPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.sku.trim() || !form.category_id) return;
+    if (!form.category_id) {
+      toast.warning('Pilih kategori obat terlebih dahulu');
+      return;
+    }
+    if (!form.sku.trim()) {
+      toast.warning('Nomor SKU / kode obat wajib diisi');
+      return;
+    }
+    if (!form.name.trim()) {
+      toast.warning('Nama produk obat wajib diisi');
+      return;
+    }
+    if (form.minimum_stock === undefined || form.minimum_stock < 0) {
+      toast.warning('Batas minimum stok tidak boleh negatif');
+      return;
+    }
+
     setSaving(true);
     try {
       if (editId) {
         await productsApi.update(editId, form);
-        toast.success('Produk berhasil diperbarui');
+        toast.success(`Produk "${form.name}" berhasil diperbarui`);
       } else {
         await productsApi.create(form);
-        toast.success('Produk berhasil ditambahkan');
+        toast.success(`Produk "${form.name}" berhasil ditambahkan ke katalog`);
       }
       setModalOpen(false);
       fetchProducts();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosErr.response?.data?.message || 'Gagal menyimpan produk');
+      const axiosErr = err as {
+        response?: {
+          data?: {
+            message?: string | string[];
+            errors?: string | string[];
+          };
+        };
+      };
+      const raw = axiosErr.response?.data?.errors || axiosErr.response?.data?.message;
+      const displayMsg = Array.isArray(raw) ? raw.join(', ') : (raw || 'Gagal menyimpan produk');
+      toast.error(displayMsg);
     } finally {
       setSaving(false);
     }
@@ -126,10 +151,11 @@ export default function ProductsPage() {
       </div>
 
       <div className="page-content">
-        <div className="mb-4 max-w-sm relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+        {/* Search */}
+        <div className="relative w-full max-w-sm mb-5">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
-            className="input pl-9"
+            className="input !pl-10"
             placeholder="Cari produk atau SKU..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -251,9 +277,9 @@ export default function ProductsPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="label">Kategori</label>
+            <label className="label">Kategori Obat <span className="text-red-500">*</span></label>
             <select className="select" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
-              <option value="">Pilih kategori</option>
+              <option value="">Pilih kategori obat...</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -261,17 +287,17 @@ export default function ProductsPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">SKU</label>
-              <input className="input uppercase" placeholder="MED-XXX-000" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase() })} />
+              <label className="label">SKU (Kode Obat) <span className="text-red-500">*</span></label>
+              <input className="input uppercase" placeholder="Contoh: MED-AMX-500" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase() })} />
             </div>
             <div>
-              <label className="label">Nama Produk</label>
-              <input className="input" placeholder="Amoxicillin 500mg" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <label className="label">Nama Produk Obat <span className="text-red-500">*</span></label>
+              <input className="input" placeholder="Contoh: Amoxicillin 500mg" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">Satuan</label>
+              <label className="label">Satuan Kemasan <span className="text-red-500">*</span></label>
               <select className="select" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}>
                 {['Tablet', 'Kapsul', 'Botol', 'Ampul', 'Tube', 'Sachet', 'Box', 'Strip'].map((u) => (
                   <option key={u} value={u}>{u}</option>
@@ -279,7 +305,7 @@ export default function ProductsPage() {
               </select>
             </div>
             <div>
-              <label className="label">Minimum Stok</label>
+              <label className="label">Batas Minimum Stok <span className="text-red-500">*</span></label>
               <input className="input" type="number" min={0} value={form.minimum_stock} onChange={(e) => setForm({ ...form, minimum_stock: Number(e.target.value) })} />
             </div>
           </div>

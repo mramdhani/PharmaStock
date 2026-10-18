@@ -54,21 +54,33 @@ export default function CategoriesPage() {
   };
 
   const handleSave = async () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      toast.warning('Nama kategori wajib diisi');
+      return;
+    }
     setSaving(true);
     try {
       if (editId) {
         await categoriesApi.update(editId, { name: name.trim() });
-        toast.success('Kategori berhasil diperbarui');
+        toast.success(`Kategori "${name.trim()}" berhasil diperbarui`);
       } else {
         await categoriesApi.create({ name: name.trim() });
-        toast.success('Kategori berhasil ditambahkan');
+        toast.success(`Kategori "${name.trim()}" berhasil ditambahkan`);
       }
       setModalOpen(false);
       fetchData();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosErr.response?.data?.message || 'Gagal menyimpan kategori');
+      const axiosErr = err as {
+        response?: {
+          data?: {
+            message?: string | string[];
+            errors?: string | string[];
+          };
+        };
+      };
+      const raw = axiosErr.response?.data?.errors || axiosErr.response?.data?.message;
+      const displayMsg = Array.isArray(raw) ? raw.join(', ') : (raw || 'Gagal menyimpan kategori');
+      toast.error(displayMsg);
     } finally {
       setSaving(false);
     }
@@ -99,11 +111,11 @@ export default function CategoriesPage() {
 
       <div className="page-content">
         {/* Search */}
-        <div className="mb-4 max-w-sm relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+        <div className="relative w-full max-w-sm mb-5">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
-            className="input pl-9"
-            placeholder="Cari kategori..."
+            className="input !pl-10"
+            placeholder="Cari kategori obat..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -178,14 +190,14 @@ export default function CategoriesPage() {
         footer={
           <>
             <button onClick={() => setModalOpen(false)} className="btn-secondary">Batal</button>
-            <button onClick={handleSave} disabled={saving || !name.trim()} className="btn-primary">
+            <button onClick={handleSave} disabled={saving} className="btn-primary">
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </>
         }
       >
         <div>
-          <label className="label">Nama Kategori</label>
+          <label className="label">Nama Kategori <span className="text-red-500">*</span></label>
           <input
             className="input"
             placeholder="Contoh: Analgesic, Antibiotic..."

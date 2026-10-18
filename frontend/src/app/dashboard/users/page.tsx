@@ -63,24 +63,48 @@ export default function UsersPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.email.trim()) return;
-    if (!editId && !form.password) return;
+    if (!form.name.trim()) {
+      toast.warning('Nama lengkap pengguna wajib diisi');
+      return;
+    }
+    if (!form.email.trim()) {
+      toast.warning('Alamat email pengguna wajib diisi');
+      return;
+    }
+    if (!editId && !form.password) {
+      toast.warning('Kata sandi wajib diisi untuk pengguna baru');
+      return;
+    }
+    if (form.password && form.password.length < 6) {
+      toast.warning('Kata sandi minimal 6 karakter');
+      return;
+    }
+
     setSaving(true);
     try {
       if (editId) {
         const payload: Record<string, unknown> = { name: form.name, email: form.email, role: form.role };
         if (form.password) payload.password = form.password;
         await usersApi.update(editId, payload);
-        toast.success('Data pengguna berhasil diperbarui');
+        toast.success(`Data pengguna "${form.name}" berhasil diperbarui`);
       } else {
         await usersApi.create(form);
-        toast.success('Pengguna baru berhasil ditambahkan');
+        toast.success(`Pengguna "${form.name}" berhasil ditambahkan`);
       }
       setModalOpen(false);
       fetchUsers();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      toast.error(axiosErr.response?.data?.message || 'Gagal menyimpan pengguna');
+      const axiosErr = err as {
+        response?: {
+          data?: {
+            message?: string | string[];
+            errors?: string | string[];
+          };
+        };
+      };
+      const raw = axiosErr.response?.data?.errors || axiosErr.response?.data?.message;
+      const displayMsg = Array.isArray(raw) ? raw.join(', ') : (raw || 'Gagal menyimpan pengguna');
+      toast.error(displayMsg);
     } finally {
       setSaving(false);
     }
@@ -196,19 +220,19 @@ export default function UsersPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="label">Nama Lengkap</label>
-            <input className="input" placeholder="John Doe" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <label className="label">Nama Lengkap <span className="text-red-500">*</span></label>
+            <input className="input" placeholder="Contoh: Budi Santoso" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div>
-            <label className="label">Email</label>
-            <input className="input" type="email" placeholder="john@pharmastock.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <label className="label">Email Pengguna <span className="text-red-500">*</span></label>
+            <input className="input" type="email" placeholder="budi@pharmastock.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           </div>
           <div>
-            <label className="label">{editId ? 'Password Baru (kosongkan jika tidak berubah)' : 'Password'}</label>
-            <input className="input" type="password" placeholder="Min. 8 karakter" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            <label className="label">{editId ? 'Password Baru (kosongkan jika tidak berubah)' : <>Password Baru <span className="text-red-500">*</span></>}</label>
+            <input className="input" type="password" placeholder="Minimal 6 karakter" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
           </div>
           <div>
-            <label className="label">Role</label>
+            <label className="label">Hak Akses (Role) <span className="text-red-500">*</span></label>
             <select className="select" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as 'ADMIN' | 'STAFF' | 'VIEWER' })}>
               <option value="ADMIN">ADMIN</option>
               <option value="STAFF">STAFF</option>

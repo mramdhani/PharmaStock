@@ -236,6 +236,36 @@ textarea.input {
   box-shadow: 0 0 0 3px var(--dexa-primary-ring);
 }
 
+/* Search input with left icon */
+.input-search,
+.input.pl-9,
+.input.pl-10,
+.pl-9,
+.pl-10 {
+  padding-left: 2.75rem !important;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 24rem;
+}
+
+.search-wrapper .search-icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--slate-400);
+  pointer-events: none;
+}
+
+.search-wrapper .input {
+  padding-left: 2.75rem !important;
+}
+
 .input-error {
   border-color: #ef4444 !important;
 }

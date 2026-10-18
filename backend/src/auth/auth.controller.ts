@@ -28,8 +28,8 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  // Rate Limiting: Maksimal 5x percobaan login per menit untuk mencegah brute-force attack
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  // Rate Limiting: 30x percobaan per menit agar user/recruiter leluasa mencoba demo login
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ResponseMessage('Login berhasil')
   @ApiOperation({
     summary:
