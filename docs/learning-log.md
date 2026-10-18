@@ -69,7 +69,33 @@ Setiap langkah dicatat di sini: apa yang dikerjakan, kenapa, dan konsep yang dip
 - Menjalankan migrasi pertama `InitialSchema` dan berhasil membuat 6 tabel (5 tabel bisnis + tabel pelacak `migrations`).
 - Bisa langsung dilihat dan di-*refresh* di DBeaver!
 
-### Step 4 — Modul Pertama: Categories (Master Category CRUD) ⏳
+### Step 4 — Modul Pertama: Categories (Master Category CRUD) ✅
+- **Arsitektur Modul Standar & Bersih**:
+  ```
+  src/categories/
+  ├── dto/
+  │   ├── create-category.dto.ts  <-- Validasi teks, min 2, max 100, trim spasi, Swagger @ApiProperty
+  │   └── update-category.dto.ts  <-- PartialType(CreateCategoryDto)
+  ├── entities/
+  │   └── category.entity.ts      <-- UUID PK, unique name, OneToMany Product
+  ├── categories.service.ts       <-- Cek duplikat (409 Conflict), pagination, ILike search, proteksi relasi
+  ├── categories.controller.ts    <-- ParseUUIDPipe(id), @ResponseMessage, status code
+  ├── categories.service.spec.ts  <-- Unit test (create, conflict, findOne) dengan mock repository
+  └── categories.module.ts        <-- TypeOrmModule.forFeature([Category])
+  ```
+- **Poin Keamanan & Best Practice**:
+  1. `ParseUUIDPipe`: parameter `:id` di-validate langsung di layer routing; jika bukan format UUID langsung ditolak `400 Bad Request` tanpa menyentuh database.
+  2. `Transform`: input string otomatis di-`trim()` agar tidak ada kategori berisi spasi kosong semata.
+  3. `ConflictException`: jika membuat/mengubah nama kategori yang sudah ada, ditolak dengan pesan jelas (`409 Conflict`).
+  4. Proteksi Relasi: kategori yang sudah dipakai oleh produk tidak bisa dihapus sembarangan.
+  5. Seluruh 5 Entity didaftarkan di `typeOrmConfigFactory` untuk memastikan relasi antar-tabel dikenali oleh TypeORM.
+- **Pengujian**:
+  - 7 unit test lulus (`npm test`).
+  - Pengujian live: `POST`, duplicate check, validasi gagal, `GET` pagination & search, `PATCH`, dan `DELETE`.
+  - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs.
+
+### Step 5 — Modul Products (Master Data Produk & Relasi Category) ⏳
+
 
 
 
