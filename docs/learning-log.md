@@ -38,6 +38,38 @@ Setiap langkah dicatat di sini: apa yang dikerjakan, kenapa, dan konsep yang dip
 - Catatan: role `pharmastock` (untuk DBeaver) sudah bukan superuser. Untuk melihat tabel buatan aplikasi, DBeaver sebaiknya login sebagai `pharmastock_app`.
 - Cek: `npm run start:dev` lalu buka http://localhost:3001/api/docs
 
-### Step 3 — Entity & Migration (5 tabel ERD) ⏳
+### Step 2.5 — Standarisasi Response & Error Handling ✅
+- **Kebutuhan**: Format respon API seragam di seluruh aplikasi, controller tidak perlu menulis wrapper JSON berulang-ulang.
+- **Success Interceptor** (`src/common/interceptors/response.interceptor.ts`):
+  - Membungkus semua return controller ke struktur:
+    ```json
+    { "success": true, "statusCode": 200, "message": "...", "data": ... }
+    ```
+  - Mendukung decorator kustom `@ResponseMessage('Pesan Anda')` (`src/common/decorators/response-message.decorator.ts`).
+- **Global Exception Filter** (`src/common/filters/http-exception.filter.ts`):
+  - Menangkap semua error (400 DTO validation, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, hingga 500 runtime error).
+  - Mengubahnya otomatis menjadi struktur:
+    ```json
+    { "success": false, "statusCode": 400, "message": "Validation failed", "errors": [ ... ] }
+    ```
+  - Di environment production, rincian error internal (stack trace) disembunyikan demi keamanan.
+- **Pagination DTO Reusable** (`src/common/dto/pagination.dto.ts`): DTO standar untuk `page`, `limit`, dan `search`.
+
+### Step 3 — Entity & Migration (5 Tabel ERD) ✅
+- Membuat 5 Entity TypeORM:
+  1. `User` (`src/users/entities/user.entity.ts`)
+  2. `Category` (`src/categories/entities/category.entity.ts`)
+  3. `Product` (`src/products/entities/product.entity.ts`)
+  4. `Batch` (`src/batches/entities/batch.entity.ts`)
+  5. `StockMovement` (`src/stock/entities/stock-movement.entity.ts`)
+- Menerapkan relasi foreign key, indeks unik (`sku`, `email`, `category.name`), indeks gabungan unik `UNIQUE(product_id, batch_number)`, dan check constraint PostgreSQL (`minimum_stock >= 0`, `current_stock >= 0`, `quantity > 0`).
+- Menyiapkan TypeORM CLI `src/database/data-source.ts` dengan script:
+  - `npm run migration:generate`
+  - `npm run migration:run`
+- Menjalankan migrasi pertama `InitialSchema` dan berhasil membuat 6 tabel (5 tabel bisnis + tabel pelacak `migrations`).
+- Bisa langsung dilihat dan di-*refresh* di DBeaver!
+
+### Step 4 — Modul Pertama: Categories (Master Category CRUD) ⏳
+
 
 

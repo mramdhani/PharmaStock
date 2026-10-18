@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { envValidationSchema } from './config/env.validation';
 import { typeOrmConfigFactory } from './config/typeorm.config';
 
@@ -25,5 +28,18 @@ import { typeOrmConfigFactory } from './config/typeorm.config';
     }),
   ],
   controllers: [AppController],
+  providers: [
+    // Standarisasi response sukses: { success: true, statusCode, message, data }
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    // Standarisasi response error: { success: false, statusCode, message, errors }
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}
+
