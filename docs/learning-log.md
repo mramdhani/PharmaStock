@@ -119,7 +119,34 @@ Setiap langkah dicatat di sini: apa yang dikerjakan, kenapa, dan konsep yang dip
   - Pengujian live: `POST`, verifikasi category UUID, penolakan SKU duplikat, kalkulasi `total_stock`, `PATCH`, dan `DELETE`.
   - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs.
 
-### Step 6 — Modul Batches (Manajemen Batch & Expiry Tracking) ⏳
+### Step 6 — Modul Batches (Manajemen Batch & Expiry Tracking) ✅
+- **Arsitektur Modul**:
+  ```
+  src/batches/
+  ├── dto/
+  │   ├── create-batch.dto.ts   <-- product_id (UUID), batch_number (Uppercase), expiry_date (YYYY-MM-DD)
+  │   ├── update-batch.dto.ts   <-- PartialType(CreateBatchDto)
+  │   └── batch-query.dto.ts    <-- product_id, has_stock, days, search, pagination
+  ├── entities/
+  │   └── batch.entity.ts       <-- UNIQUE(product_id, batch_number), CHECK(current_stock >= 0)
+  ├── batches.service.ts        <-- Validasi tanggal expired masa depan, saldo awal 0, FEFO query, hitung sisa hari
+  ├── batches.controller.ts     <-- Route /expiring (alert dashboard), ParseUUIDPipe, ParseIntPipe
+  ├── batches.service.spec.ts   <-- Unit tests (NotFound product, Past expiry check, Conflict duplicate, Initial stock 0)
+  └── batches.module.ts         <-- TypeOrmModule.forFeature([Batch, Product, StockMovement])
+  ```
+- **Poin Keamanan & Best Practice Industri Farmasi**:
+  1. `Kebijakan Saldo Awal 0`: Pembuatan batch baru **selalu** memiliki saldo `current_stock = 0`. Stok hanya bisa bertambah melalui transaksi resmi `Stock In` demi akuntabilitas audit.
+  2. `Composite Uniqueness`: Satu produk tidak boleh memiliki nomor batch yang sama (`UNIQUE(product_id, batch_number)`).
+  3. `Validasi Expiry Date Masa Depan`: Mencegah human error memasukkan obat yang sudah kedaluwarsa saat pencatatan batch baru.
+  4. `FEFO (First Expired, First Out)`: Query batch otomatis diurutkan berdasarkan tanggal kedaluwarsa paling dekat (`expiry_date ASC`), sehingga staf gudang selalu memprioritaskan batch yang harus dikeluarkan lebih dulu.
+  5. `Endpoint Peringatan Dini (/batches/expiring)`: Menampilkan batch yang bersaldo dan akan kedaluwarsa dalam 30/60/90 hari untuk widget alert di dashboard.
+- **Pengujian**:
+  - 15 unit test lulus (`npm test`).
+  - Pengujian live: penolakan expired masa lalu, pembuatan batch, penolakan nomor batch duplikat, verifikasi urutan FEFO, dan filter dashboard.
+  - Terdokumentasi otomatis di Swagger http://localhost:3001/api/docs.
+
+### Step 7 — Modul Stock Movements & Transaksi Database (Stock In / Out) ⏳
+
 
 
 
