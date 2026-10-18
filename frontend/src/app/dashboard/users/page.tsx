@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Users, Pencil, Shield, UserCog, BookOpen, RotateCcw } from 'lucide-react';
 import { usersApi, systemApi, getApiErrorMessage } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 import Modal from '@/components/Modal';
@@ -30,6 +31,7 @@ interface UserForm {
 const emptyForm: UserForm = { name: '', email: '', password: '', role: 'STAFF' };
 
 export default function UsersPage() {
+  const { canMutate } = useAuth();
   const toast = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
