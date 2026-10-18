@@ -28,27 +28,34 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback((type: ToastType, message: string, title?: string) => {
-    const id = ++toastId;
     const defaultTitles: Record<ToastType, string> = {
       success: 'Berhasil',
       error: 'Terjadi Kesalahan',
       warning: 'Peringatan Validasi',
       info: 'Informasi',
     };
+    const finalTitle = title || defaultTitles[type];
 
-    setToasts((prev) => [
-      ...prev,
-      {
-        id,
-        type,
-        title: title || defaultTitles[type],
-        message,
-      },
-    ]);
+    setToasts((prev) => {
+      // Prevent duplicate toasts with the exact same message and type
+      if (prev.some((t) => t.message === message && t.type === type)) {
+        return prev;
+      }
+      const id = ++toastId;
+      setTimeout(() => {
+        setToasts((current) => current.filter((t) => t.id !== id));
+      }, 4500);
 
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4500);
+      return [
+        ...prev,
+        {
+          id,
+          type,
+          title: finalTitle,
+          message,
+        },
+      ];
+    });
   }, []);
 
   const removeToast = useCallback((id: number) => {
@@ -85,16 +92,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     },
   };
 
+  const value = React.useMemo(
+    () => ({
+      toast: addToast,
+      success: (m: string, t?: string) => addToast('success', m, t),
+      error: (m: string, t?: string) => addToast('error', m, t),
+      warning: (m: string, t?: string) => addToast('warning', m, t),
+      info: (m: string, t?: string) => addToast('info', m, t),
+    }),
+    [addToast]
+  );
+
   return (
-    <ToastContext.Provider
-      value={{
-        toast: addToast,
-        success: (m, t) => addToast('success', m, t),
-        error: (m, t) => addToast('error', m, t),
-        warning: (m, t) => addToast('warning', m, t),
-        info: (m, t) => addToast('info', m, t),
-      }}
-    >
+    <ToastContext.Provider value={value}>
       {children}
       {/* Toast Container placed at top z-index above all modals */}
       <div className="toast-container" style={{ zIndex: 99999 }}>

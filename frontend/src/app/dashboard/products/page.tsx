@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 import Modal from '@/components/Modal';
+import EmptyState from '@/components/EmptyState';
 
 interface Product {
   id: string;
@@ -34,8 +35,16 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -45,15 +54,15 @@ export default function ProductsPage() {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await productsApi.getAll({ search, page, limit: 10 });
+      const res = await productsApi.getAll({ search: debouncedSearch, page, limit: 10 });
       setProducts(res.data.data.items);
       setMeta(res.data.data.meta);
-    } catch {
-      toast.error('Gagal memuat data produk');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Gagal memuat data produk'));
     } finally {
       setLoading(false);
     }
-  }, [search, page, toast]);
+  }, [debouncedSearch, page]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -185,11 +194,18 @@ export default function ProductsPage() {
                   ))
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan={canMutate ? 7 : 6}>
-                      <div className="empty-state py-12">
-                        <Package className="empty-state-icon" />
-                        <p className="empty-state-title">Belum ada produk</p>
-                      </div>
+                    <td colSpan={canMutate ? 7 : 6} className="!py-4 !px-0">
+                      <EmptyState
+                        icon={Package}
+                        title={search ? 'Produk tidak ditemukan' : 'Belum ada produk'}
+                        description={
+                          search
+                            ? `Tidak ada produk obat yang cocok dengan "${search}". Coba kata kunci lain.`
+                            : canMutate
+                            ? 'Katalog produk obat masih kosong. Klik tombol "+ Tambah" di atas untuk menambahkan produk baru.'
+                            : 'Katalog produk obat masih kosong.'
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (

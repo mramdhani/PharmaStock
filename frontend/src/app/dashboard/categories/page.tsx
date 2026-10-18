@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 import Modal from '@/components/Modal';
+import EmptyState from '@/components/EmptyState';
 
 interface Category {
   id: string;
@@ -21,6 +22,15 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -29,14 +39,14 @@ export default function CategoriesPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await categoriesApi.getAll({ search, limit: 100 });
+      const res = await categoriesApi.getAll({ search: debouncedSearch, limit: 100 });
       setCategories(res.data.data.items);
-    } catch {
-      toast.error('Gagal memuat data kategori');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Gagal memuat data kategori'));
     } finally {
       setLoading(false);
     }
-  }, [search, toast]);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     fetchData();
@@ -140,12 +150,18 @@ export default function CategoriesPage() {
                   ))
                 ) : categories.length === 0 ? (
                   <tr>
-                    <td colSpan={canMutate ? 3 : 2}>
-                      <div className="empty-state py-12">
-                        <Layers className="empty-state-icon" />
-                        <p className="empty-state-title">Belum ada kategori</p>
-                        <p className="empty-state-desc">Klik tombol &quot;Tambah&quot; untuk menambahkan kategori baru.</p>
-                      </div>
+                    <td colSpan={canMutate ? 3 : 2} className="!py-4 !px-0">
+                      <EmptyState
+                        icon={Layers}
+                        title={search ? 'Kategori tidak ditemukan' : 'Belum ada kategori'}
+                        description={
+                          search
+                            ? `Tidak ada kategori yang cocok dengan "${search}".`
+                            : canMutate
+                            ? 'Klik tombol "+ Tambah" di atas untuk menambahkan kategori obat baru.'
+                            : 'Belum ada kategori obat yang terdaftar.'
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (

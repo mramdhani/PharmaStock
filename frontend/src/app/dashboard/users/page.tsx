@@ -6,6 +6,7 @@ import { usersApi, systemApi, getApiErrorMessage } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
 import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 import Modal from '@/components/Modal';
+import EmptyState from '@/components/EmptyState';
 
 interface User {
   id: string;
@@ -48,7 +49,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
@@ -174,11 +175,16 @@ export default function UsersPage() {
                   ))
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>
-                      <div className="empty-state py-12">
-                        <Users className="empty-state-icon" />
-                        <p className="empty-state-title">Belum ada pengguna</p>
-                      </div>
+                    <td colSpan={6} className="!py-4 !px-0">
+                      <EmptyState
+                        icon={Users}
+                        title="Belum ada pengguna"
+                        description={
+                          canMutate
+                            ? 'Klik tombol "+ Tambah" di atas untuk mendaftarkan akun staf atau apoteker baru.'
+                            : 'Belum ada data pengguna yang terdaftar.'
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (

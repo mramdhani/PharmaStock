@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { maskInputProfanity, checkProfanity } from '@/lib/profanity';
 import Modal from '@/components/Modal';
+import EmptyState from '@/components/EmptyState';
 
 interface Batch {
   id: string;
@@ -26,8 +27,16 @@ export default function BatchesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -36,15 +45,15 @@ export default function BatchesPage() {
 
   const fetchBatches = useCallback(async () => {
     try {
-      const res = await batchesApi.getAll({ search, page, limit: 10 });
+      const res = await batchesApi.getAll({ search: debouncedSearch, page, limit: 10 });
       setBatches(res.data.data.items);
       setMeta(res.data.data.meta);
-    } catch {
-      toast.error('Gagal memuat data batch');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Gagal memuat data batch'));
     } finally {
       setLoading(false);
     }
-  }, [search, page, toast]);
+  }, [debouncedSearch, page]);
 
   useEffect(() => { fetchBatches(); }, [fetchBatches]);
   useEffect(() => {
@@ -140,11 +149,16 @@ export default function BatchesPage() {
                   ))
                 ) : batches.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>
-                      <div className="empty-state py-12">
-                        <Archive className="empty-state-icon" />
-                        <p className="empty-state-title">Belum ada batch</p>
-                      </div>
+                    <td colSpan={5} className="!py-4 !px-0">
+                      <EmptyState
+                        icon={Archive}
+                        title={search ? 'Batch tidak ditemukan' : 'Belum ada batch'}
+                        description={
+                          search
+                            ? `Tidak ada nomor batch yang cocok dengan "${search}".`
+                            : 'Belum ada batch obat yang terdaftar. Batch akan dibuat saat melakukan transaksi Stok Masuk.'
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (

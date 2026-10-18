@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ScrollText, TrendingUp, TrendingDown } from 'lucide-react';
 import { stockApi } from '@/lib/api';
+import EmptyState from '@/components/EmptyState';
 
 interface Movement {
   id: string;
@@ -84,12 +85,12 @@ export default function MovementsPage() {
                   ))
                 ) : movements.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>
-                      <div className="empty-state py-12">
-                        <ScrollText className="empty-state-icon" />
-                        <p className="empty-state-title">Belum ada riwayat</p>
-                        <p className="empty-state-desc">Buku besar mutasi stok masih kosong.</p>
-                      </div>
+                    <td colSpan={7} className="!py-4 !px-0">
+                      <EmptyState
+                        icon={ScrollText}
+                        title="Belum ada riwayat"
+                        description="Buku besar mutasi stok masih kosong. Riwayat akan otomatis tercatat saat stok masuk atau keluar."
+                      />
                     </td>
                   </tr>
                 ) : (
