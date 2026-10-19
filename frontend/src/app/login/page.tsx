@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Cross, Eye, EyeOff, Shield, UserCog, BookOpen, Clock, AlertTriangle, ShieldAlert, ExternalLink, Sparkles, X, MessageSquareHeart } from 'lucide-react';
-import { authApi } from '@/lib/api';
+import { authApi, guestbookApi } from '@/lib/api';
 
 const demoAccounts = [
   { label: 'Admin', email: 'admin@pharmastock.com', password: 'PharmaStock123!', icon: Shield, desc: 'Akses penuh' },
@@ -49,7 +49,7 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleSaveIntro = (e?: React.FormEvent) => {
+  const handleSaveIntro = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!tempName.trim()) return;
 
@@ -65,6 +65,16 @@ export default function LoginPage() {
     setVisitorOrg(data.org);
     setIntroSaved(true);
     setShowIntroModal(false);
+
+    try {
+      await guestbookApi.create({
+        name: data.name,
+        organization: data.org || undefined,
+        note: data.note || undefined,
+      });
+    } catch (err) {
+      console.warn('Gagal simpan ke database PostgreSQL:', err);
+    }
   };
 
   // Countdown timer effect

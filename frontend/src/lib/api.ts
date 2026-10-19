@@ -115,4 +115,13 @@ export const systemApi = {
   resetDemo: () => api.post('/system/reset-demo'),
 };
 
+// ============ Guestbook (Buku Tamu Pengunjung & Rekruter) ============
+export const guestbookApi = {
+  create: (data: { name: string; organization?: string; note?: string }) =>
+    api.post('/guestbook', data),
+  getAll: () => api.get('/guestbook'),
+  delete: (id: string) => api.delete(`/guestbook/${id}`),
+};
+
 export default api;
+

@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { Batch } from '../batches/entities/batch.entity';
 import { Category } from '../categories/entities/category.entity';
+import { Guestbook } from '../guestbook/entities/guestbook.entity';
 import { Product } from '../products/entities/product.entity';
 import { StockMovement } from '../stock/entities/stock-movement.entity';
 import { User } from '../users/entities/user.entity';
@@ -16,7 +17,7 @@ export const dataSourceOptions: DataSourceOptions = {
   database: process.env.DB_NAME || 'pharmastock',
   username: process.env.DB_USER || 'pharmastock_app',
   password: process.env.DB_PASSWORD || 'pharmastock_dev_password_2026',
-  entities: [User, Category, Product, Batch, StockMovement],
+  entities: [User, Category, Product, Batch, StockMovement, Guestbook],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',

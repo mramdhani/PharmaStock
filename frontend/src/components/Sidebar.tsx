@@ -11,6 +11,7 @@ import {
   ArrowUpFromLine,
   ScrollText,
   Users,
+  BookMarked,
   LogOut,
   Cross,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ const navigation = [
 
 const adminNav = [
   { name: 'Pengguna', href: '/dashboard/users', icon: Users },
+  { name: 'Buku Tamu', href: '/dashboard/guestbook', icon: BookMarked },
 ];
 
 export default function Sidebar() {
