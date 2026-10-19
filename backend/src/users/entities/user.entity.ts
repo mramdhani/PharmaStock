@@ -10,6 +10,7 @@ import {
 import { StockMovement } from '../../stock/entities/stock-movement.entity';
 
 export enum UserRole {
+  SUPERADMIN = 'SUPERADMIN',
   ADMIN = 'ADMIN',
   STAFF = 'STAFF',
   VIEWER = 'VIEWER',

@@ -29,7 +29,16 @@ export class RolesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest();
 
-    if (!user || !requiredRoles.includes(user.role)) {
+    if (!user) {
+      throw new ForbiddenException('Akses ditolak: pengguna tidak terotentikasi');
+    }
+
+    // SUPERADMIN memiliki hak akses tertinggi ke seluruh endpoint berizin
+    if (user.role === UserRole.SUPERADMIN) {
+      return true;
+    }
+
+    if (!requiredRoles.includes(user.role)) {
       throw new ForbiddenException(
         `Akses ditolak: role "${user?.role}" tidak memiliki wewenang untuk tindakan ini`,
       );

@@ -18,7 +18,7 @@ export class SystemController {
   @ApiOperation({
     summary: 'Reset Database Demo ke Kondisi Standar Pabrik (Khusus Admin)',
     description:
-      'Menghapus mutasi atau perubahan dan mengisi ulang produk, kategori, batch serta pergerakan stok standar Dexa Group.',
+      'Menghapus mutasi atau perubahan dan mengisi ulang produk, kategori, batch serta pergerakan stok standar sistem PharmaStock.',
   })
   @ApiResponse({
     status: 200,

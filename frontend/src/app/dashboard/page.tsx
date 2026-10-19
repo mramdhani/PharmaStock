@@ -175,7 +175,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="page-title">Dashboard Operasional</h1>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            Sistem Inventaris Farmasi Dexa Group · Masuk sebagai <span className="font-semibold text-slate-800">{user?.name}</span>
+            Sistem Manajemen Inventaris Farmasi Enterprise · Masuk sebagai <span className="font-semibold text-slate-800">{user?.name}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">

@@ -226,7 +226,7 @@ export default function BatchesPage() {
           </div>
           <div>
             <label className="label">Nomor Batch <span className="text-red-500">*</span></label>
-            <input className="input uppercase" placeholder="Contoh: BAT-DEXA-2026A" value={form.batch_number} onChange={(e) => setForm({ ...form, batch_number: maskInputProfanity(e.target.value).toUpperCase() })} />
+            <input className="input uppercase" placeholder="Contoh: BAT-2026-001A" value={form.batch_number} onChange={(e) => setForm({ ...form, batch_number: maskInputProfanity(e.target.value).toUpperCase() })} />
           </div>
           <div>
             <label className="label">Tanggal Kadaluarsa (Expired Date) <span className="text-red-500">*</span></label>

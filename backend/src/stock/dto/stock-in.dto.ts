@@ -43,7 +43,7 @@ export class StockInDto {
   reference_no?: string;
 
   @ApiPropertyOptional({
-    example: 'Penerimaan stok batch perdana dari supplier Dexa Medica',
+    example: 'Penerimaan stok batch perdana dari distributor farmasi',
     description: 'Catatan tambahan transaksi',
   })
   @IsString({ message: 'notes harus berupa teks' })

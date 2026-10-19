@@ -125,7 +125,7 @@ export default function UsersPage() {
   const handleResetDemo = async () => {
     if (
       !window.confirm(
-        'PERINGATAN: Apakah Anda yakin ingin mereset seluruh data demo kembali ke kondisi standar pabrik? Seluruh produk, batch, dan pergerakan stok uji coba akan dikembalikan ke data awal Dexa Group.',
+        'PERINGATAN: Apakah Anda yakin ingin mereset seluruh data demo kembali ke kondisi standar pabrik? Seluruh produk, batch, dan pergerakan stok uji coba akan dikembalikan ke data awal sistem standar.',
       )
     ) {
       return;
@@ -244,7 +244,7 @@ export default function UsersPage() {
                 <RotateCcw className="w-4 h-4 text-red-600" /> Pemeliharaan & Reset Database Demo
               </h3>
               <p className="text-xs text-red-700/80 mt-1">
-                Jika produk, batch, atau stok diacak-acak oleh pengunjung publik, Admin dapat memulihkan seluruh data kembali ke kondisi awal Dexa Group secara instan.
+                Jika produk, batch, atau stok diacak-acak oleh pengunjung publik, Admin dapat memulihkan seluruh data kembali ke kondisi awal sistem PharmaStock secara instan.
               </p>
             </div>
             <button

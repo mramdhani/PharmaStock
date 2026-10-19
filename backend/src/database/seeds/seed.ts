@@ -31,6 +31,13 @@ export async function seed() {
   // 1. Akun Pengguna
   const defaultUsers = [
     {
+      name: 'Muhammad Ramdani',
+      email: 'tuan.ramdhani@gmail.com',
+      password_hash: defaultPassword,
+      role: UserRole.SUPERADMIN,
+      is_active: true,
+    },
+    {
       name: 'System Administrator',
       email: 'admin@pharmastock.com',
       password_hash: defaultPassword,
@@ -100,7 +107,7 @@ export async function seed() {
     {
       category_id: categoryMap.get('Analgesik & Antipiretik')!.id,
       sku: 'MED-PCT-500',
-      name: 'Paracetamol 500mg Dexa',
+      name: 'Paracetamol 500mg Kaplet',
       unit: 'Tablet',
       minimum_stock: 200,
     },
@@ -213,8 +220,8 @@ export async function seed() {
         user_id: staff.id,
         type: MovementType.IN,
         quantity: 200,
-        reference_no: 'PO-2026-DEXA-001',
-        notes: 'Penerimaan stok awal dari pabrik Cikarang',
+        reference_no: 'PO-2026-MED-001',
+        notes: 'Penerimaan stok awal dari pabrik farmasi',
         created_at: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000),
       },
       {
@@ -240,7 +247,7 @@ export async function seed() {
         user_id: staff.id,
         type: MovementType.IN,
         quantity: 500,
-        reference_no: 'PO-2026-DEXA-002',
+        reference_no: 'PO-2026-MED-002',
         notes: 'Penerimaan batch reguler Paracetamol',
         created_at: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
       },
@@ -258,7 +265,7 @@ export async function seed() {
         user_id: staff.id,
         type: MovementType.IN,
         quantity: 30,
-        reference_no: 'PO-2026-DEXA-003',
+        reference_no: 'PO-2026-MED-003',
         notes: 'Penerimaan awal Candesartan',
         created_at: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
       },
@@ -276,7 +283,7 @@ export async function seed() {
         user_id: staff.id,
         type: MovementType.IN,
         quantity: 95,
-        reference_no: 'PO-2026-DEXA-005',
+        reference_no: 'PO-2026-MED-005',
         notes: 'Penerimaan Cetirizine antihistamin',
         created_at: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },

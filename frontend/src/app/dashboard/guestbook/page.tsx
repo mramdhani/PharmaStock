@@ -29,7 +29,7 @@ interface GuestbookEntry {
 }
 
 export default function GuestbookPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const toast = useToast();
   const [entries, setEntries] = useState<GuestbookEntry[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -51,12 +51,12 @@ export default function GuestbookPage() {
   }, [toast]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isSuperAdmin) {
       fetchEntries();
     } else {
       setLoading(false);
     }
-  }, [isAdmin, fetchEntries]);
+  }, [isSuperAdmin, fetchEntries]);
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Hapus catatan salam dari "${name}"?`)) return;
@@ -74,8 +74,8 @@ export default function GuestbookPage() {
     }
   };
 
-  // Jika bukan Superadmin / Admin
-  if (!isAdmin && !loading) {
+  // Jika bukan Superadmin
+  if (!isSuperAdmin && !loading) {
     return (
       <div className="page-content">
         <div className="card p-8 text-center max-w-lg mx-auto mt-12 border-red-200">
@@ -84,7 +84,7 @@ export default function GuestbookPage() {
           </div>
           <h2 className="text-lg font-bold text-slate-900">Akses Khusus Superadmin</h2>
           <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-            Halaman Buku Tamu ini hanya dapat diakses oleh akun <strong>Admin</strong> ({user?.email}).
+            Halaman Buku Tamu ini privat dan hanya dapat diakses oleh akun <strong>Superadmin</strong> (tuan.ramdhani@gmail.com).
             Anda saat ini masuk dengan role <span className="badge-info text-xs">{user?.role}</span>.
           </p>
         </div>

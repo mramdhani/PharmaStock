@@ -7,7 +7,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'STAFF' | 'VIEWER';
+  role: 'SUPERADMIN' | 'ADMIN' | 'STAFF' | 'VIEWER';
 }
 
 interface AuthContextType {
@@ -16,9 +16,10 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  isSuperAdmin: boolean;
   isAdmin: boolean;
   isStaff: boolean;
-  canMutate: boolean; // ADMIN atau STAFF
+  canMutate: boolean; // SUPERADMIN, ADMIN atau STAFF
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -55,12 +56,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = '/login';
   }, []);
 
-  const isAdmin = user?.role === 'ADMIN';
+  const isSuperAdmin = user?.role === 'SUPERADMIN';
+  const isAdmin = user?.role === 'ADMIN' || isSuperAdmin;
   const isStaff = user?.role === 'STAFF';
   const canMutate = isAdmin || isStaff;
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, isAdmin, isStaff, canMutate }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout, isSuperAdmin, isAdmin, isStaff, canMutate }}>
       {children}
     </AuthContext.Provider>
   );

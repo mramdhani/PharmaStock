@@ -140,7 +140,7 @@ export default function StockInPage() {
                 <label className="label">Nomor Referensi / PO / Faktur</label>
                 <input
                   className="input"
-                  placeholder="Contoh: PO-2026-DEXA-001 (opsional)"
+                  placeholder="Contoh: PO-2026-MED-001 (opsional)"
                   value={form.reference_no}
                   onChange={(e) => setForm({ ...form, reference_no: maskInputProfanity(e.target.value) })}
                 />

@@ -29,12 +29,15 @@ const navigation = [
 
 const adminNav = [
   { name: 'Pengguna', href: '/dashboard/users', icon: Users },
+];
+
+const superAdminNav = [
   { name: 'Buku Tamu', href: '/dashboard/guestbook', icon: BookMarked },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin } = useAuth();
 
   return (
     <aside className="sidebar">
@@ -79,6 +82,26 @@ export default function Sidebar() {
                 >
                   <item.icon className="w-[18px] h-[18px] shrink-0" />
                   <span className="truncate">{item.name}</span>
+                </Link>
+              );
+            })}
+          </>
+        )}
+
+        {isSuperAdmin && (
+          <>
+            <p className="px-3 mt-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Superadmin</p>
+            {superAdminNav.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
+                >
+                  <item.icon className="w-[18px] h-[18px] shrink-0 text-[#c41230]" />
+                  <span className="truncate">{item.name}</span>
+                  <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-[#c41230]">VIP</span>
                 </Link>
               );
             })}

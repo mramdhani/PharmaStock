@@ -46,24 +46,24 @@ export class GuestbookController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPERADMIN)
   @Get()
   @ResponseMessage('Daftar buku tamu berhasil diambil')
-  @ApiOperation({ summary: 'Lihat daftar buku tamu & perkenalan pengunjung (Khusus Admin)' })
+  @ApiOperation({ summary: 'Lihat daftar buku tamu & perkenalan pengunjung (Khusus Superadmin)' })
   @ApiResponse({ status: 200, description: 'Daftar buku tamu' })
-  @ApiResponse({ status: 403, description: 'Akses ditolak (Hanya Admin)' })
+  @ApiResponse({ status: 403, description: 'Akses ditolak (Hanya Superadmin)' })
   findAll() {
     return this.guestbookService.findAll();
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPERADMIN)
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Data buku tamu berhasil dihapus')
-  @ApiOperation({ summary: 'Hapus data buku tamu (Khusus Admin)' })
+  @ApiOperation({ summary: 'Hapus data buku tamu (Khusus Superadmin)' })
   @ApiResponse({ status: 200, description: 'Data berhasil dihapus' })
-  @ApiResponse({ status: 403, description: 'Akses ditolak (Hanya Admin)' })
+  @ApiResponse({ status: 403, description: 'Akses ditolak (Hanya Superadmin)' })
   @ApiResponse({ status: 404, description: 'Data tidak ditemukan' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.guestbookService.remove(id);
