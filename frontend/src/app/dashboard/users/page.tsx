@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Users, Pencil, Shield, UserCog, BookOpen, RotateCcw } from 'lucide-react';
+import { Plus, Users, Pencil, Shield, ShieldCheck, UserCog, BookOpen, RotateCcw } from 'lucide-react';
 import { usersApi, systemApi, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
@@ -13,19 +13,30 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'STAFF' | 'VIEWER';
+  role: 'SUPERADMIN' | 'ADMIN' | 'STAFF' | 'VIEWER';
   is_active: boolean;
   created_at: string;
 }
 
-const roleIcons = { ADMIN: Shield, STAFF: UserCog, VIEWER: BookOpen };
-const roleBadges = { ADMIN: 'badge-danger', STAFF: 'badge-info', VIEWER: 'badge-neutral' };
+const roleIcons: Record<string, typeof Shield> = {
+  SUPERADMIN: ShieldCheck,
+  ADMIN: Shield,
+  STAFF: UserCog,
+  VIEWER: BookOpen,
+};
+
+const roleBadges: Record<string, string> = {
+  SUPERADMIN: 'badge-danger font-bold',
+  ADMIN: 'badge-danger',
+  STAFF: 'badge-info',
+  VIEWER: 'badge-neutral',
+};
 
 interface UserForm {
   name: string;
   email: string;
   password: string;
-  role: 'ADMIN' | 'STAFF' | 'VIEWER';
+  role: 'SUPERADMIN' | 'ADMIN' | 'STAFF' | 'VIEWER';
 }
 
 const emptyForm: UserForm = { name: '', email: '', password: '', role: 'STAFF' };
@@ -191,7 +202,8 @@ export default function UsersPage() {
                   </tr>
                 ) : (
                   users.map((u) => {
-                    const RoleIcon = roleIcons[u.role];
+                    const RoleIcon = roleIcons[u.role] || Shield;
+                    const badgeClass = roleBadges[u.role] || 'badge-neutral';
                     return (
                       <tr key={u.id} className={!u.is_active ? 'opacity-50' : ''}>
                         <td>
@@ -204,7 +216,7 @@ export default function UsersPage() {
                         </td>
                         <td className="text-neutral-600">{u.email}</td>
                         <td>
-                          <span className={roleBadges[u.role]}>
+                          <span className={badgeClass}>
                             <RoleIcon className="w-3 h-3 mr-1" />
                             {u.role}
                           </span>
