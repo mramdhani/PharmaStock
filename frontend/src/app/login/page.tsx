@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Cross, Eye, EyeOff, Shield, UserCog, BookOpen, Clock, AlertTriangle, ShieldAlert, ExternalLink } from 'lucide-react';
+import { Cross, Eye, EyeOff, Shield, UserCog, BookOpen, Clock, AlertTriangle, ShieldAlert, ExternalLink, Sparkles, X, MessageSquareHeart } from 'lucide-react';
 import { authApi } from '@/lib/api';
 
 const demoAccounts = [
@@ -18,12 +18,54 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Visitor / Interviewer Introduction State
+  const [visitorName, setVisitorName] = useState('');
+  const [visitorOrg, setVisitorOrg] = useState('');
+  const [introSaved, setIntroSaved] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(false);
+  const [tempName, setTempName] = useState('');
+  const [tempOrg, setTempOrg] = useState('');
+  const [tempNote, setTempNote] = useState('');
+
   // Rate Limiting & Attempt Tracking State
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [isThrottled, setIsThrottled] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [initialCountdown, setInitialCountdown] = useState<number>(60);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Load existing visitor if any
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('pharmastock_guest_visitor');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setVisitorName(parsed.name || '');
+        setVisitorOrg(parsed.org || '');
+        setIntroSaved(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleSaveIntro = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!tempName.trim()) return;
+
+    const data = {
+      name: tempName.trim(),
+      org: tempOrg.trim(),
+      note: tempNote.trim(),
+      timestamp: new Date().toISOString(),
+    };
+
+    localStorage.setItem('pharmastock_guest_visitor', JSON.stringify(data));
+    setVisitorName(data.name);
+    setVisitorOrg(data.org);
+    setIntroSaved(true);
+    setShowIntroModal(false);
+  };
 
   // Countdown timer effect
   useEffect(() => {
@@ -156,10 +198,44 @@ export default function LoginPage() {
       <div className="w-full max-w-md flex flex-col items-center z-10">
         {/* Floating Glassmorphic Greeting Pill di Luar Card */}
         <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 hover:bg-white/20 backdrop-blur-md border border-white/25 text-white shadow-lg transition-all text-xs">
-          <span className="text-sm">👋</span>
-          <span className="font-medium">
-            Live Showcase by <strong className="font-semibold text-white">Muhammad Ramdani</strong>
-          </span>
+          {introSaved ? (
+            <>
+              <span className="text-sm">🎉</span>
+              <span className="font-medium">
+                Halo, <strong className="font-semibold text-white">{visitorName}</strong>!
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setTempName(visitorName);
+                  setTempOrg(visitorOrg);
+                  setShowIntroModal(true);
+                }}
+                className="text-white/80 hover:text-white underline text-[11px] cursor-pointer"
+              >
+                (Ubah)
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-sm">👋</span>
+              <span className="font-medium">
+                Live Showcase by <strong className="font-semibold text-white">Muhammad Ramdani</strong>
+              </span>
+              <span className="text-white/40">•</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setTempName(visitorName);
+                  setTempOrg(visitorOrg);
+                  setShowIntroModal(true);
+                }}
+                className="font-semibold text-red-100 hover:text-white underline underline-offset-2 transition-colors cursor-pointer"
+              >
+                Perkenalkan Diri ✍️
+              </button>
+            </>
+          )}
           <span className="text-white/40">•</span>
           <a
             href="https://muhramdani.com"
@@ -323,11 +399,157 @@ export default function LoginPage() {
           ))}
         </div>
 
-        <p className="mt-6 text-center text-[11px] text-slate-400">
+        {/* Recruiter / Visitor Interactive Introduction Trigger */}
+        <div className="mt-4 pt-3 border-t border-slate-100">
+          {!introSaved ? (
+            <button
+              type="button"
+              onClick={() => {
+                setTempName(visitorName);
+                setTempOrg(visitorOrg);
+                setShowIntroModal(true);
+              }}
+              className="w-full p-2.5 rounded-xl bg-gradient-to-r from-red-50/60 via-slate-50 to-red-50/40 hover:from-red-100/70 hover:to-red-50 border border-dashed border-red-200 hover:border-red-400 transition-all flex items-center justify-between text-left group cursor-pointer shadow-2xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-red-100/80 text-[#c41230] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <MessageSquareHeart className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-800 group-hover:text-[#c41230] transition-colors">
+                    Sedang Interview / Berkunjung?
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Perkenalkan nama & perusahaan Anda (Opsional)
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-bold text-[#c41230] bg-white px-2.5 py-1 rounded-lg border border-red-200 shadow-2xs group-hover:bg-[#c41230] group-hover:text-white transition-all whitespace-nowrap ml-2">
+                Sapa ✍️
+              </span>
+            </button>
+          ) : (
+            <div className="p-2.5 rounded-xl bg-gradient-to-r from-red-50 via-white to-red-50/60 border border-red-200 flex items-center justify-between shadow-2xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-lg">🎉</span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 truncate">
+                    Halo, {visitorName} {visitorOrg ? `(${visitorOrg})` : ''}!
+                  </p>
+                  <p className="text-[11px] text-slate-600">
+                    Salam hangat dari Muhammad Ramdani!
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setTempName(visitorName);
+                  setTempOrg(visitorOrg);
+                  setShowIntroModal(true);
+                }}
+                className="text-xs text-[#c41230] hover:text-red-800 font-semibold underline shrink-0 ml-2 cursor-pointer"
+              >
+                Ubah
+              </button>
+            </div>
+          )}
+        </div>
+
+        <p className="mt-4 text-center text-[11px] text-slate-400">
           Sistem manajemen inventaris farmasi enterprise-grade
         </p>
       </div>
     </div>
+
+      {/* Introduction Modal */}
+      {showIntroModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 relative">
+            <button
+              onClick={() => setShowIntroModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+              title="Tutup"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 text-[#c41230] flex items-center justify-center shrink-0 shadow-xs">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Perkenalkan Diri Anda</h3>
+                <p className="text-xs text-slate-500">Salam kenal dari Muhammad Ramdani</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+              Sedang me-review untuk proses interview kerja atau sekadar berkunjung? Boleh tinggalkan nama atau nama perusahaan Anda di sini:
+            </p>
+
+            <form onSubmit={handleSaveIntro} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                  Nama Anda <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  placeholder="Contoh: Budi Santoso / Pak David"
+                  className="input text-xs"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                  Perusahaan / Instansi (Opsional)
+                </label>
+                <input
+                  type="text"
+                  value={tempOrg}
+                  onChange={(e) => setTempOrg(e.target.value)}
+                  placeholder="Contoh: PT Kalbe / BCA / Tech Recruiter"
+                  className="input text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                  Catatan / Salam Singkat (Opsional)
+                </label>
+                <input
+                  type="text"
+                  value={tempNote}
+                  onChange={(e) => setTempNote(e.target.value)}
+                  placeholder="Contoh: Tertarik review portofolio kamu"
+                  className="input text-xs"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowIntroModal(false)}
+                  className="btn-secondary flex-1 py-2 text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={!tempName.trim()}
+                  className="btn-primary flex-1 py-2 text-xs"
+                >
+                  Kirim Salam 🚀
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

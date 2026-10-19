@@ -58,6 +58,18 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBanner, setShowBanner] = useState(true);
+  const [visitor, setVisitor] = useState<{ name: string; org?: string } | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('pharmastock_guest_visitor');
+      if (saved) {
+        setVisitor(JSON.parse(saved));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     dashboardApi
@@ -183,14 +195,18 @@ export default function DashboardPage() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-slate-900">
-                    Live Enterprise Showcase — PharmaStock
+                    {visitor?.name
+                      ? `Selamat Datang, ${visitor.name}${visitor.org ? ` (${visitor.org})` : ''}! 👋`
+                      : 'Live Enterprise Showcase — PharmaStock'}
                   </h3>
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-[#c41230]">
                     Portfolio
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
-                  Halo Rekruter & Pengunjung! Aplikasi ini dibangun oleh <strong>Muhammad Ramdani</strong> menggunakan <strong>Next.js, NestJS, PostgreSQL</strong>, dan dideploy via <strong>Docker di Linux VPS</strong>. Silakan eksplorasi fitur stok, batch, atau uji dokumentasi API interaktif.
+                  {visitor?.name
+                    ? `Terima kasih sudah berkunjung, ${visitor.name}! Showcase ini dibangun oleh Muhammad Ramdani menggunakan Next.js, NestJS, dan PostgreSQL. Silakan eksplorasi fitur stok, batch FEFO, atau uji dokumentasi API interaktif.`
+                    : `Halo Rekruter & Pengunjung! Aplikasi ini dibangun oleh Muhammad Ramdani menggunakan Next.js, NestJS, PostgreSQL, dan dideploy via Docker di Linux VPS. Silakan eksplorasi fitur stok, batch, atau uji dokumentasi API interaktif.`}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 pt-1 text-xs">
                   <a
