@@ -12,6 +12,8 @@ import {
   XCircle,
   Clock,
   ArrowRight,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -55,6 +57,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showBanner, setShowBanner] = useState(true);
 
   useEffect(() => {
     dashboardApi
@@ -170,6 +173,56 @@ export default function DashboardPage() {
 
       {/* Content */}
       <div className="page-content">
+        {/* Recruiter / Visitor Welcome Banner */}
+        {showBanner && (
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-red-50 via-white to-red-50/40 border border-red-200/70 shadow-sm relative flex items-start justify-between gap-4 animate-in fade-in">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-red-100/80 text-[#c41230] flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Live Enterprise Showcase — PharmaStock
+                  </h3>
+                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-[#c41230]">
+                    Portfolio
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+                  Halo Rekruter & Pengunjung! Aplikasi ini dibangun oleh <strong>Muhammad Ramdani</strong> menggunakan <strong>Next.js, NestJS, PostgreSQL</strong>, dan dideploy via <strong>Docker di Linux VPS</strong>. Silakan eksplorasi fitur stok, batch, atau uji dokumentasi API interaktif.
+                </p>
+                <div className="flex flex-wrap items-center gap-3 pt-1 text-xs">
+                  <a
+                    href="https://pharmastock.muhramdani.com/api/docs/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-[#c41230] hover:underline flex items-center gap-1"
+                  >
+                    📘 Dokumentasi Swagger API &rarr;
+                  </a>
+                  <span className="text-slate-300">•</span>
+                  <a
+                    href="https://muhramdani.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-600 hover:text-slate-900 hover:underline"
+                  >
+                    🌐 Kunjungi Portofolio Utama
+                  </a>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowBanner(false)}
+              className="text-slate-400 hover:text-slate-600 p-1 -mr-1 -mt-1 transition-colors"
+              title="Tutup sapaan"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* KPI Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
           {kpiCards.map((card) => (
